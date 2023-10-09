@@ -1,0 +1,35 @@
+name: Crypto algorithm implementation testing pipeline
+
+on:
+  pull_request:
+    branches: [ "cf-zeta" ]
+  workflow_dispatch:
+
+jobs:
+  crypto_testing_job:
+    
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    - name: build kernel & modules
+      run: |
+        cp zeta/test-artifacts/config-um .config
+        make olddefconfig ARCH=um
+        make ARCH=um all
+        mkdir initramfs
+        make modules_install INSTALL_MOD_PATH=./initramfs ARCH=um
+    - name: prepare initramfs
+      run: |
+        sudo apt-get install busybox-static
+        mkdir initramfs/bin
+        cp -p /bin/busybox initramfs/bin/busybox
+        cp -p zeta/test-artifacts/init  initramfs/init
+        cp -p zeta/test-artifacts/test-script.sh initramfs/test-script.sh
+        cd initramfs
+        find . -print0 | cpio --null --create --verbose --format=newc | gzip --best > ../uml-initramfs.cpio.gz
+        cd ..
+    - name: run user-mode linux test harness
+      run: |
+        sudo ./linux initrd=uml-initramfs.cpio.gz > tcrypt.out 2>&1
+        cat tcrypt.out
