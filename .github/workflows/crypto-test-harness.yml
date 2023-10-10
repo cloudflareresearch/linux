@@ -16,13 +16,13 @@ jobs:
       run: |
         cp zeta/test-artifacts/config-um .config
         make olddefconfig ARCH=um
-        make ARCH=um all
+        make -j$(nproc) ARCH=um all
         mkdir initramfs
         make modules_install INSTALL_MOD_PATH=./initramfs ARCH=um
     - name: prepare initramfs
       run: |
         sudo apt-get install busybox-static
-        mkdir initramfs/bin
+        mkdir initramfs/bin initramfs/proc
         cp -p /bin/busybox initramfs/bin/busybox
         cp -p zeta/test-artifacts/init  initramfs/init
         cp -p zeta/test-artifacts/test-script.sh initramfs/test-script.sh

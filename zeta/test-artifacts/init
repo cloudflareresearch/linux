@@ -1,10 +1,11 @@
 #!/bin/busybox sh
 
+/bin/busybox --install -s /bin
+
 echo "tcrypt: starting tcrypt test execution"
 
 ./test-script.sh
 
-mkdir /proc
-busybox mount proc /proc -t proc
+mount proc /proc -t proc
 
-busybox poweroff -f
+poweroff -f
