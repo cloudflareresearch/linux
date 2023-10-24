@@ -223,4 +223,129 @@ void Hacl_Streaming_SHA2_finish_384(struct Hacl_Streaming_MD_state_64_s *p,
 void Hacl_Streaming_SHA2_hash_384(uint8_t *input, uint32_t input_len,
                                   uint8_t *dst);
 
+struct Hacl_Streaming_Blake2_blake2s_32_block_state_s {
+        uint32_t *fst;
+        uint32_t *snd;
+};
+
+struct Hacl_Streaming_Blake2_blake2b_32_block_state_s {
+        uint64_t *fst;
+        uint64_t *snd;
+};
+
+struct Hacl_Streaming_Blake2_blake2s_32_state_s {
+        struct Hacl_Streaming_Blake2_blake2s_32_block_state_s block_state;
+        uint8_t *buf;
+        uint64_t total_len;
+};
+
+struct Hacl_Streaming_Blake2_blake2b_32_state_s {
+        struct Hacl_Streaming_Blake2_blake2b_32_block_state_s block_state;
+        uint8_t *buf;
+        uint64_t total_len;
+};
+
+struct K___uint32_t_uint32_t_s {
+        uint32_t fst;
+        uint32_t snd;
+};
+
+void Hacl_Blake2b_32_blake2b_init(uint64_t *hash, uint32_t kk, uint32_t nn);
+
+void Hacl_Blake2s_32_blake2s_init(uint32_t *hash, uint32_t kk, uint32_t nn);
+
+/**
+  (Re-)initialization function when there is no key
+*/
+void Hacl_Streaming_Blake2_blake2s_32_no_key_init(
+        struct Hacl_Streaming_Blake2_blake2s_32_state_s *s1);
+
+/**
+  Update function when there is no key; 0 = success, 1 = max length exceeded
+*/
+Hacl_Streaming_Types_error_code Hacl_Streaming_Blake2_blake2s_32_no_key_update(
+        struct Hacl_Streaming_Blake2_blake2s_32_state_s *p, uint8_t *data,
+        uint32_t len);
+
+/**
+  Finish function when there is no key
+*/
+void Hacl_Streaming_Blake2_blake2s_32_no_key_finish(
+        struct Hacl_Streaming_Blake2_blake2s_32_state_s *p, uint8_t *dst);
+
+/**
+  (Re)-initialization function when there is no key
+*/
+void Hacl_Streaming_Blake2_blake2b_32_no_key_init(
+        struct Hacl_Streaming_Blake2_blake2b_32_state_s *s1);
+
+/**
+  Update function when there is no key; 0 = success, 1 = max length exceeded
+*/
+Hacl_Streaming_Types_error_code Hacl_Streaming_Blake2_blake2b_32_no_key_update(
+        struct Hacl_Streaming_Blake2_blake2b_32_state_s *p, uint8_t *data,
+        uint32_t len);
+
+/**
+  Finish function when there is no key
+*/
+void Hacl_Streaming_Blake2_blake2b_32_no_key_finish(
+        struct Hacl_Streaming_Blake2_blake2b_32_state_s *p, uint8_t *dst);
+
+static const uint32_t Hacl_Impl_Blake2_Constants_sigmaTable[160U] = {
+        (uint32_t)0U,  (uint32_t)1U,  (uint32_t)2U,  (uint32_t)3U,
+        (uint32_t)4U,  (uint32_t)5U,  (uint32_t)6U,  (uint32_t)7U,
+        (uint32_t)8U,  (uint32_t)9U,  (uint32_t)10U, (uint32_t)11U,
+        (uint32_t)12U, (uint32_t)13U, (uint32_t)14U, (uint32_t)15U,
+        (uint32_t)14U, (uint32_t)10U, (uint32_t)4U,  (uint32_t)8U,
+        (uint32_t)9U,  (uint32_t)15U, (uint32_t)13U, (uint32_t)6U,
+        (uint32_t)1U,  (uint32_t)12U, (uint32_t)0U,  (uint32_t)2U,
+        (uint32_t)11U, (uint32_t)7U,  (uint32_t)5U,  (uint32_t)3U,
+        (uint32_t)11U, (uint32_t)8U,  (uint32_t)12U, (uint32_t)0U,
+        (uint32_t)5U,  (uint32_t)2U,  (uint32_t)15U, (uint32_t)13U,
+        (uint32_t)10U, (uint32_t)14U, (uint32_t)3U,  (uint32_t)6U,
+        (uint32_t)7U,  (uint32_t)1U,  (uint32_t)9U,  (uint32_t)4U,
+        (uint32_t)7U,  (uint32_t)9U,  (uint32_t)3U,  (uint32_t)1U,
+        (uint32_t)13U, (uint32_t)12U, (uint32_t)11U, (uint32_t)14U,
+        (uint32_t)2U,  (uint32_t)6U,  (uint32_t)5U,  (uint32_t)10U,
+        (uint32_t)4U,  (uint32_t)0U,  (uint32_t)15U, (uint32_t)8U,
+        (uint32_t)9U,  (uint32_t)0U,  (uint32_t)5U,  (uint32_t)7U,
+        (uint32_t)2U,  (uint32_t)4U,  (uint32_t)10U, (uint32_t)15U,
+        (uint32_t)14U, (uint32_t)1U,  (uint32_t)11U, (uint32_t)12U,
+        (uint32_t)6U,  (uint32_t)8U,  (uint32_t)3U,  (uint32_t)13U,
+        (uint32_t)2U,  (uint32_t)12U, (uint32_t)6U,  (uint32_t)10U,
+        (uint32_t)0U,  (uint32_t)11U, (uint32_t)8U,  (uint32_t)3U,
+        (uint32_t)4U,  (uint32_t)13U, (uint32_t)7U,  (uint32_t)5U,
+        (uint32_t)15U, (uint32_t)14U, (uint32_t)1U,  (uint32_t)9U,
+        (uint32_t)12U, (uint32_t)5U,  (uint32_t)1U,  (uint32_t)15U,
+        (uint32_t)14U, (uint32_t)13U, (uint32_t)4U,  (uint32_t)10U,
+        (uint32_t)0U,  (uint32_t)7U,  (uint32_t)6U,  (uint32_t)3U,
+        (uint32_t)9U,  (uint32_t)2U,  (uint32_t)8U,  (uint32_t)11U,
+        (uint32_t)13U, (uint32_t)11U, (uint32_t)7U,  (uint32_t)14U,
+        (uint32_t)12U, (uint32_t)1U,  (uint32_t)3U,  (uint32_t)9U,
+        (uint32_t)5U,  (uint32_t)0U,  (uint32_t)15U, (uint32_t)4U,
+        (uint32_t)8U,  (uint32_t)6U,  (uint32_t)2U,  (uint32_t)10U,
+        (uint32_t)6U,  (uint32_t)15U, (uint32_t)14U, (uint32_t)9U,
+        (uint32_t)11U, (uint32_t)3U,  (uint32_t)0U,  (uint32_t)8U,
+        (uint32_t)12U, (uint32_t)2U,  (uint32_t)13U, (uint32_t)7U,
+        (uint32_t)1U,  (uint32_t)4U,  (uint32_t)10U, (uint32_t)5U,
+        (uint32_t)10U, (uint32_t)2U,  (uint32_t)8U,  (uint32_t)4U,
+        (uint32_t)7U,  (uint32_t)6U,  (uint32_t)1U,  (uint32_t)5U,
+        (uint32_t)15U, (uint32_t)11U, (uint32_t)9U,  (uint32_t)14U,
+        (uint32_t)3U,  (uint32_t)12U, (uint32_t)13U
+};
+
+static const uint32_t Hacl_Impl_Blake2_Constants_ivTable_S[8U] = {
+        (uint32_t)0x6A09E667U, (uint32_t)0xBB67AE85U, (uint32_t)0x3C6EF372U,
+        (uint32_t)0xA54FF53AU, (uint32_t)0x510E527FU, (uint32_t)0x9B05688CU,
+        (uint32_t)0x1F83D9ABU, (uint32_t)0x5BE0CD19U
+};
+
+static const uint64_t Hacl_Impl_Blake2_Constants_ivTable_B[8U] = {
+        (uint64_t)0x6A09E667F3BCC908U, (uint64_t)0xBB67AE8584CAA73BU,
+        (uint64_t)0x3C6EF372FE94F82BU, (uint64_t)0xA54FF53A5F1D36F1U,
+        (uint64_t)0x510E527FADE682D1U, (uint64_t)0x9B05688C2B3E6C1FU,
+        (uint64_t)0x1F83D9ABFB41BD6BU, (uint64_t)0x5BE0CD19137E2179U
+};
+
 #endif  // CRYPTO_HACL_HASH_H_

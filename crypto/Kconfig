@@ -921,6 +921,23 @@ config CRYPTO_BLAKE2B
 
 	  See https://blake2.net for further information.
 
+config CRYPTO_BLAKE2_HACL
+	tristate "HACL Blake2"
+	select CRYPTO_HASH
+	help
+	  BLAKE2 cryptographic hash function (RFC 7693)
+
+	  This is a formally verified implementation of BLAKE2s and BLAKE2b, ported
+	  from the HACL* project.
+
+	  This module provides the following algorithms:
+	  - blake2b-160
+	  - blake2b-256
+	  - blake2b-384
+	  - blake2b-512
+	  - blake2s-160
+	  - blake2s-256
+
 config CRYPTO_CMAC
 	tristate "CMAC (Cipher-based MAC)"
 	select CRYPTO_HASH
