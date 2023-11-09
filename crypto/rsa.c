@@ -13,6 +13,8 @@
 #include <crypto/akcipher.h>
 #include <crypto/algapi.h>
 
+#include "hacl_bignum.h"
+
 struct rsa_mpi_key {
 	MPI n;
 	MPI e;
