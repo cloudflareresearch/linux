@@ -1,9 +1,9 @@
+// SPDX-License-Identifier: GPL-2.0 OR MIT
 /*
- * GPLv2 or MIT License
- *
  * Copyright (c) 2016-2022 INRIA, CMU and Microsoft Corporation
  * Copyright (c) 2022-2023 HACL* Contributors
  *
+ * This is a formally-verified implementation of SHA-2 produced by HACL*.
  */
 
 #include "hacl_hash.h"
@@ -951,3 +951,5 @@ void Hacl_Streaming_SHA2_finish_384(struct Hacl_Streaming_MD_state_64_s *p,
                 r, buf_last, tmp_block_state);
         Hacl_SHA2_Scalar32_sha384_finish(tmp_block_state, dst);
 }
+
+MODULE_LICENSE("Dual MIT/GPL");

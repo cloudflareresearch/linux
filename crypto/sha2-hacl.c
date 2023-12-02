@@ -1,8 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0 OR MIT
 /*
- * GPLv2 or MIT License
- *
  * Copyright (c) 2023 Cryspen
  *
+ * This is a formally-verified implementation of SHA-2 produced by HACL*.
  */
 
 #include <crypto/sha2.h>
@@ -178,7 +178,7 @@ static void __exit sha2_hacl_mod_fini(void)
 subsys_initcall(sha2_hacl_mod_init);
 module_exit(sha2_hacl_mod_fini);
 
-MODULE_LICENSE("GPLv2 or MIT");
+MODULE_LICENSE("Dual MIT/GPL");
 MODULE_DESCRIPTION("Formally Verified SHA-2 Secure Hash Algorithm from HACL*");
 
 MODULE_ALIAS_CRYPTO("sha224");
