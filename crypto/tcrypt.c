@@ -771,6 +771,7 @@ static int test_ahash_jiffies(struct ahash_request *req, int blen,
 static int test_ahash_cycles_digest(struct ahash_request *req, int blen,
 				    char *out)
 {
+	const int NUM_ITERATIONS = 1 << 10;
 	unsigned long cycles = 0;
 	int ret, i;
 
@@ -782,7 +783,7 @@ static int test_ahash_cycles_digest(struct ahash_request *req, int blen,
 	}
 
 	/* The real thing. */
-	for (i = 0; i < 8; i++) {
+	for (i = 0; i < NUM_ITERATIONS; i++) {
 		cycles_t start, end;
 
 		start = get_cycles();
@@ -801,7 +802,7 @@ out:
 		return ret;
 
 	pr_cont("%6lu cycles/operation, %4lu cycles/byte\n",
-		cycles / 8, cycles / (8 * blen));
+		cycles / NUM_ITERATIONS, cycles / (NUM_ITERATIONS * blen));
 
 	return 0;
 }

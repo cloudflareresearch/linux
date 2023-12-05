@@ -9,7 +9,9 @@ typedef unsigned long cycles_t;
 #ifndef get_cycles
 static inline cycles_t get_cycles(void)
 {
-	return 0;
+	unsigned long low, high;
+	asm volatile("rdtsc" : "=a"(low), "=d"(high));
+	return (high<<32) | low;
 }
 #endif
 
