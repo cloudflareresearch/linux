@@ -1406,7 +1406,7 @@ CONFIG_CRYPTO_TEST=m
 #
 # HACL implementation
 #
-CONFIG_CRYPTO_SHA2_HACL=y
+CONFIG_CRYPTO_SHA2_HACL=m
 # end of HACL implementation
 
 #
