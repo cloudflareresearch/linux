@@ -444,15 +444,16 @@ void Hacl_Blake2b_32_blake2b_finish(uint32_t nn, uint8_t *output,
 }
 
 /**
-Write the BLAKE2b digest of message `d` using key `k` into `output`.
-
-@param nn Length of the to-be-generated digest with 1 <= `nn` <= 64.
-@param output Pointer to `nn` bytes of memory where the digest is written to.
-@param ll Length of the input message.
-@param d Pointer to `ll` bytes of memory where the input message is read from.
-@param kk Length of the key. Can be 0.
-@param k Pointer to `kk` bytes of memory where the key is read from.
-*/
+ * Hacl_Blake2b_32_blake2b() - Write the BLAKE2b digest of message `d` using
+ * key `k` into `output`.
+ * @nn:     Length of the to-be-generated digest with 1 <= `nn` <= 64.
+ * @output: Pointer to `nn` bytes of memory where the digest is written to.
+ * @ll:     Length of the input message.
+ * @d:      Pointer to `ll` bytes of memory where the input message is
+ *          read from.
+ * @kk:     Length of the key. Can be 0.
+ * @k:      Pointer to `kk` bytes of memory where the key is read from.
+ */
 void Hacl_Blake2b_32_blake2b(uint32_t nn, uint8_t *output, uint32_t ll,
                              uint8_t *d, uint32_t kk, uint8_t *k)
 {
@@ -886,15 +887,17 @@ void Hacl_Blake2s_32_blake2s_finish(uint32_t nn, uint8_t *output,
 }
 
 /**
-Write the BLAKE2s digest of message `d` using key `k` into `output`.
-
-@param nn Length of to-be-generated digest with 1 <= `nn` <= 32.
-@param output Pointer to `nn` bytes of memory where the digest is written to.
-@param ll Length of the input message.
-@param d Pointer to `ll` bytes of memory where the input message is read from.
-@param kk Length of the key. Can be 0.
-@param k Pointer to `kk` bytes of memory where the key is read from.
-*/
+ * Hacl_Blake2s_32_blake2s() - Write the BLAKE2s digest of message `d` using
+ * key `k` into `output`.
+ *
+ * @nn:     Length of to-be-generated digest with 1 <= `nn` <= 32.
+ * @output: Pointer to `nn` bytes of memory where the digest is written to.
+ * @ll:     Length of the input message.
+ * @d:      Pointer to `ll` bytes of memory where the input message is read
+ *          from.
+ * @kk:     Length of the key. Can be 0.
+ * @k:      Pointer to `kk` bytes of memory where the key is read from.
+ */
 void Hacl_Blake2s_32_blake2s(uint32_t nn, uint8_t *output, uint32_t ll,
                              uint8_t *d, uint32_t kk, uint8_t *k)
 {
@@ -907,9 +910,9 @@ void Hacl_Blake2s_32_blake2s(uint32_t nn, uint8_t *output, uint32_t ll,
         Lib_Memzero0_memzero(b, (uint32_t)16U, uint32_t);
 }
 
-/**
-  (Re-)initialization function when there is no key
-*/
+/*
+ * (Re-)initialization function when there is no key
+ */
 void Hacl_Streaming_Blake2_blake2s_32_no_key_init(
         struct Hacl_Streaming_Blake2_blake2s_32_state_s *s1)
 {
@@ -928,9 +931,9 @@ void Hacl_Streaming_Blake2_blake2s_32_no_key_init(
         s1[0U] = tmp;
 }
 
-/**
-  Update function when there is no key; 0 = success, 1 = max length exceeded
-*/
+/*
+ * Update function when there is no key; 0 = success, 1 = max length exceeded
+ */
 Hacl_Streaming_Types_error_code Hacl_Streaming_Blake2_blake2s_32_no_key_update(
         struct Hacl_Streaming_Blake2_blake2s_32_state_s *p, uint8_t *data,
         uint32_t len)
@@ -1085,9 +1088,9 @@ Hacl_Streaming_Types_error_code Hacl_Streaming_Blake2_blake2s_32_no_key_update(
         return Hacl_Streaming_Types_Success;
 }
 
-/**
-  Finish function when there is no key
-*/
+/*
+ * Finish function when there is no key
+ */
 void Hacl_Streaming_Blake2_blake2s_32_no_key_finish(
         struct Hacl_Streaming_Blake2_blake2s_32_state_s *p, uint8_t *dst)
 {
@@ -1134,9 +1137,9 @@ void Hacl_Streaming_Blake2_blake2s_32_no_key_finish(
         Hacl_Blake2s_32_blake2s_finish((uint32_t)32U, dst, tmp_block_state.snd);
 }
 
-/**
-  (Re)-initialization function when there is no key
-*/
+/*
+ * (Re)-initialization function when there is no key
+ */
 void Hacl_Streaming_Blake2_blake2b_32_no_key_init(
         struct Hacl_Streaming_Blake2_blake2b_32_state_s *s1)
 {
@@ -1155,9 +1158,9 @@ void Hacl_Streaming_Blake2_blake2b_32_no_key_init(
         s1[0U] = tmp;
 }
 
-/**
-  Update function when there is no key; 0 = success, 1 = max length exceeded
-*/
+/*
+ * Update function when there is no key; 0 = success, 1 = max length exceeded
+ */
 Hacl_Streaming_Types_error_code Hacl_Streaming_Blake2_blake2b_32_no_key_update(
         struct Hacl_Streaming_Blake2_blake2b_32_state_s *p, uint8_t *data,
         uint32_t len)
@@ -1319,9 +1322,9 @@ Hacl_Streaming_Types_error_code Hacl_Streaming_Blake2_blake2b_32_no_key_update(
         return Hacl_Streaming_Types_Success;
 }
 
-/**
-  Finish function when there is no key
-*/
+/*
+ * Finish function when there is no key
+ */
 void Hacl_Streaming_Blake2_blake2b_32_no_key_finish(
         struct Hacl_Streaming_Blake2_blake2b_32_state_s *p, uint8_t *dst)
 {
