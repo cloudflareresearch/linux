@@ -1,7 +1,10 @@
+// SPDX-License-Identifier: GPL-2.0 OR MIT
 /*
  * Copyright (c) 2016-2022 INRIA, CMU and Microsoft Corporation
  * Copyright (c) 2022-2023 HACL* Contributors
  * Copyright (c) 2023 Cryspen
+ *
+ * This is a formally-verified implementation of BLAKE2 produced by HACL*.
  */
 
 #include "hacl_hash.h"
@@ -1366,3 +1369,5 @@ void Hacl_Streaming_Blake2_blake2b_32_no_key_finish(
                 buf_last);
         Hacl_Blake2b_32_blake2b_finish((uint32_t)64U, dst, tmp_block_state.snd);
 }
+
+MODULE_LICENSE("Dual MIT/GPL");
