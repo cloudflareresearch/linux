@@ -1,8 +1,9 @@
-/* GPLv2 or MIT License
- *
+// SPDX-License-Identifier: GPL-2.0 OR MIT
+/*
  * Copyright (c) 2016-2022 INRIA, CMU and Microsoft Corporation
  * Copyright (c) 2022-2023 HACL* Contributors
  *
+ * This is a formally-verified implementation of SHA-3 produced by HACL*.
  */
 
 #include "hacl_hash.h"
@@ -259,10 +260,10 @@ static void Hacl_Hash_SHA3_update_last_sha3(Spec_Hash_Definitions_hash_alg a,
         Hacl_Impl_SHA3_state_permute(s);
 }
 
-typedef struct hash_buf2_s {
+struct hash_buf2 {
         struct Hacl_Streaming_Keccak_hash_buf_s fst;
         struct Hacl_Streaming_Keccak_hash_buf_s snd;
-} hash_buf2;
+};
 
 static Spec_Hash_Definitions_hash_alg
 Hacl_Streaming_Keccak_get_alg(struct Hacl_Streaming_Keccak_state_s *s)
@@ -473,7 +474,7 @@ static void finish_(Spec_Hash_Definitions_hash_alg a,
         struct Hacl_Streaming_Keccak_hash_buf_s tmp_block_state = {
                 .fst = a, .snd = buf
         };
-        hash_buf2 scrut = { .fst = block_state, .snd = tmp_block_state };
+        struct hash_buf2 scrut = { .fst = block_state, .snd = tmp_block_state };
         uint64_t *s_dst = scrut.snd.snd;
         uint64_t *s_src = scrut.fst.snd;
         memcpy(s_dst, s_src, (uint32_t)25U * sizeof(uint64_t));
@@ -579,3 +580,5 @@ void Hacl_SHA3_sha3_512(uint32_t inputByteLen, uint8_t *input, uint8_t *output)
         Hacl_Impl_SHA3_keccak((uint32_t)576U, (uint32_t)1024U, inputByteLen,
                               input, (uint8_t)0x06U, (uint32_t)64U, output);
 }
+
+MODULE_LICENSE("Dual MIT/GPL");

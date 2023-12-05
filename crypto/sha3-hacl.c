@@ -1,7 +1,8 @@
-/* GPLv2 or MIT License
- *
+// SPDX-License-Identifier: GPL-2.0 OR MIT
+/*
  * Copyright (c) 2023 Cryspen
  *
+ * This is a formally-verified implementation of SHA-3 produced by HACL*.
  */
 
 #include <crypto/sha3.h>
@@ -136,7 +137,7 @@ static void __exit sha3_hacl_mod_fini(void)
 subsys_initcall(sha3_hacl_mod_init);
 module_exit(sha3_hacl_mod_fini);
 
-MODULE_LICENSE("GPLv2 or MIT");
+MODULE_LICENSE("Dual MIT/GPL");
 MODULE_DESCRIPTION("Formally Verified SHA-3 Secure Hash Algorithm from HACL*");
 
 MODULE_ALIAS_CRYPTO("sha3-224");
