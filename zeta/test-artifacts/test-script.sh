@@ -1,6 +1,7 @@
 #!/bin/busybox sh
 
 echo "tcrypt: starting CRYPTO_SHA2_HACL"
+modprobe sha2-hacl
 modprobe tcrypt mode=300 alg=sha224-hacl sec=2
 modprobe tcrypt mode=300 alg=sha256-hacl sec=2
 modprobe tcrypt mode=300 alg=sha384-hacl sec=2
