@@ -124,8 +124,55 @@ static struct shash_alg algs[] = {
         }
 };
 
+static int test_hash(char *hash_alg_name, const unsigned char *data,
+                     unsigned int datalen, unsigned char *digest,
+                     unsigned int digestlen)
+{
+        struct crypto_shash *alg;
+        struct shash_desc *sdesc;
+        char out[300];
+        int size;
+        int ret;
+        alg = crypto_alloc_shash(hash_alg_name, 0, CRYPTO_ALG_ASYNC);
+        if (IS_ERR(alg)) {
+                pr_info("can't alloc alg %s\n", hash_alg_name);
+                return PTR_ERR(alg);
+        }
+        size = sizeof(struct shash_desc) + crypto_shash_descsize(alg);
+        sdesc = kmalloc(size, GFP_KERNEL);
+        if (IS_ERR(sdesc)) {
+                pr_info("can't alloc sdesc\n");
+                return PTR_ERR(sdesc);
+        }
+        sdesc->tfm = alg;
+        hacl_sha3_init(sdesc);
+        hacl_sha3_update(sdesc, data, datalen);
+        hacl_sha3_final(sdesc, digest);
+        pr_err("Name: %s\n", hash_alg_name);
+        memset(out, 0, ARRAY_SIZE(out));
+        for (int i = 0; i < digestlen; i++)
+                snprintf(out, ARRAY_SIZE(out), "%s%02x", out, digest[i]);
+        pr_err("hacl:    %s\n", out);
+        ret = crypto_shash_digest(sdesc, data, datalen, digest);
+        memset(out, 0, ARRAY_SIZE(out));
+        for (int i = 0; i < digestlen; i++)
+                snprintf(out, ARRAY_SIZE(out), "%s%02x", out, digest[i]);
+        pr_err("generic: %s\n", out);
+        kfree(sdesc);
+        crypto_free_shash(alg);
+        return ret;
+}
+
 static int __init sha3_hacl_mod_init(void)
 {
+        unsigned char data[1];
+        unsigned char out[SHA3_512_DIGEST_SIZE];
+        data[0] = 'a';
+        int datalen = ARRAY_SIZE(data);
+        test_hash("sha3-224", data, datalen, out, SHA3_224_DIGEST_SIZE);
+        test_hash("sha3-256", data, datalen, out, SHA3_256_DIGEST_SIZE);
+        test_hash("sha3-384", data, datalen, out, SHA3_384_DIGEST_SIZE);
+        test_hash("sha3-512", data, datalen, out, SHA3_512_DIGEST_SIZE);
         return crypto_register_shashes(algs, ARRAY_SIZE(algs));
 }
 
