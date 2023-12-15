@@ -7,6 +7,15 @@ modprobe tcrypt mode=300 alg=sha256-hacl sec=2
 modprobe tcrypt mode=300 alg=sha384-hacl sec=2
 modprobe tcrypt mode=300 alg=sha512-hacl sec=2
 
+echo "tcrypt: starting CRYPTO_BLAKE2_HACL"
+modprobe blake2-hacl
+modprobe tcrypt mode=300 alg=blake2b-160-hacl sec=2
+modprobe tcrypt mode=300 alg=blake2b-256-hacl sec=2
+modprobe tcrypt mode=300 alg=blake2b-384-hacl sec=2
+modprobe tcrypt mode=300 alg=blake2b-512-hacl sec=2
+modprobe tcrypt mode=300 alg=blake2s-160-hacl sec=2
+modprobe tcrypt mode=300 alg=blake2s-256-hacl sec=2
+
 echo "tcrypt: starting SHA2 (256) test"
 echo "tcrypt: testing sha256 generic implementation"
 modprobe tcrypt mode=300 alg=sha256-generic sec=2

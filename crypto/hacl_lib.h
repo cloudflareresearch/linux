@@ -21,6 +21,11 @@ static inline u128 FStar_UInt128_shift_left(u128 x, u32 y)
         return (x << y);
 }
 
+inline static u128 FStar_UInt128_shift_right(u128 x, u32 y)
+{
+        return x >> y;
+}
+
 static inline u128 FStar_UInt128_add(u128 x, u128 y)
 {
         return (x + y);
@@ -29,6 +34,16 @@ static inline u128 FStar_UInt128_add(u128 x, u128 y)
 static inline u128 FStar_UInt128_uint64_to_uint128(u64 x)
 {
         return ((u128)x);
+}
+
+inline static u64 FStar_UInt128_uint128_to_uint64(u32 x)
+{
+        return (u64)x;
+}
+
+inline static u128 FStar_UInt128_add_mod(u128 x, u128 y)
+{
+        return x + y;
 }
 
 /*
@@ -40,6 +55,10 @@ static inline u128 FStar_UInt128_uint64_to_uint128(u64 x)
 #define store32_be(b, i) put_unaligned_be32(i, b);
 #define load64_be(b)     (get_unaligned_be64(b))
 #define store64_be(b, i) put_unaligned_be64(i, b);
+#define load32_le(b)     (get_unaligned_le32(b))
+#define load64_le(b)     (get_unaligned_le64(b))
+#define store32_le(b, i) put_unaligned_le32(i, b);
+#define store64_le(b, i) put_unaligned_le64(i, b);
 
 static inline void store128_be(u8 *buf, u128 x)
 {
@@ -230,5 +249,8 @@ static inline void store128_be(u8 *buf, u128 x)
 #else
 #define KRML_MAYBE_FOR16(i, z, n, k, x) KRML_ACTUAL_FOR(i, z, n, k, x)
 #endif
+
+#define Lib_Memzero0_memzero(dst, len, t) memzero_explicit(dst, len * sizeof(t))
+#define KRML_HOST_IGNORE(x)               (void)(x)
 
 #endif  // CRYPTO_HACL_LIB_H_
