@@ -5,6 +5,8 @@
 #ifndef __CRYPTO_SHA3_H__
 #define __CRYPTO_SHA3_H__
 
+#include <linux/types.h>
+
 #define SHA3_224_DIGEST_SIZE	(224 / 8)
 #define SHA3_224_BLOCK_SIZE	(200 - 2 * SHA3_224_DIGEST_SIZE)
 
@@ -25,6 +27,8 @@ struct sha3_state {
 	unsigned int	partial;
 	u8		buf[SHA3_224_BLOCK_SIZE];
 };
+
+struct shash_desc;
 
 int crypto_sha3_init(struct shash_desc *desc);
 int crypto_sha3_update(struct shash_desc *desc, const u8 *data,
