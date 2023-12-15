@@ -50,11 +50,12 @@ int hacl_sha3_update(struct shash_desc *desc, const u8 *data, unsigned int len)
         st.block_state.fst = hacl_sha3_alg(sctx->rsiz);
         st.block_state.snd = sctx->st;
         st.buf = sctx->buf;
-        st.total_len = 0;
+        st.total_len = sctx->partial;
         uint8_t ret = Hacl_Streaming_Keccak_update(&st, (uint8_t *)data, len);
         if (ret > 0) {
                 return -1;
         } else {
+  	        sctx->partial = st.total_len ;
                 return 0;
         }
 }
@@ -67,7 +68,7 @@ int hacl_sha3_final(struct shash_desc *desc, u8 *out)
         st.block_state.fst = hacl_sha3_alg(sctx->rsiz);
         st.block_state.snd = sctx->st;
         st.buf = sctx->buf;
-        st.total_len = 0;
+        st.total_len = sctx->partial;
         uint8_t ret = Hacl_Streaming_Keccak_finish(&st, out);
         if (ret > 0) {
                 return -1;
