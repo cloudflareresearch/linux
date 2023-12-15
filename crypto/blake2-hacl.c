@@ -49,7 +49,11 @@ int hacl_blake2b_final(struct shash_desc *desc, u8 *out)
 {
         struct Hacl_Streaming_Blake2_blake2b_32_state_s *sctx =
                 shash_desc_ctx(desc);
-        Hacl_Streaming_Blake2_blake2b_32_no_key_finish(sctx, out);
+        u8 full_hash[64];
+        int outlen = crypto_shash_digestsize(desc->tfm);
+        Hacl_Streaming_Blake2_blake2b_32_no_key_finish(sctx, full_hash);
+	memcpy(out,full_hash,outlen);
+	
         struct Hacl_Streaming_Blake2_blake2b_32_state_s scrut = *sctx;
         uint8_t *buf = scrut.buf;
         struct Hacl_Streaming_Blake2_blake2b_32_block_state_s block_state =
@@ -112,7 +116,10 @@ int hacl_blake2s_final(struct shash_desc *desc, u8 *out)
 {
         struct Hacl_Streaming_Blake2_blake2s_32_state_s *sctx =
                 shash_desc_ctx(desc);
-        Hacl_Streaming_Blake2_blake2s_32_no_key_finish(sctx, out);
+        u8 full_hash[32];
+        int outlen = crypto_shash_digestsize(desc->tfm);
+        Hacl_Streaming_Blake2_blake2s_32_no_key_finish(sctx, full_hash);
+	memcpy(out,full_hash,outlen);
         struct Hacl_Streaming_Blake2_blake2s_32_state_s scrut = *sctx;
         uint8_t *buf = scrut.buf;
         struct Hacl_Streaming_Blake2_blake2s_32_block_state_s block_state =
