@@ -254,14 +254,14 @@ config CRYPTO_RSA
 	help
 	  RSA (Rivest-Shamir-Adleman) public key algorithm (RFC8017) from HACL*
 
-config CRYPTO_RSA_HACL
-	tristate "RSA (Rivest-Shamir-Adleman)"
-	select CRYPTO_AKCIPHER
-	select CRYPTO_MANAGER
-	select MPILIB
-	select ASN1
-	help
-	  RSA (Rivest-Shamir-Adleman) public key algorithm (RFC8017)
+; config CRYPTO_RSA_HACL
+; 	tristate "RSA (Rivest-Shamir-Adleman)"
+; 	select CRYPTO_AKCIPHER
+; 	select CRYPTO_MANAGER
+; 	select MPILIB
+; 	select ASN1
+; 	help
+; 	  RSA (Rivest-Shamir-Adleman) public key algorithm (RFC8017)
 
 config CRYPTO_DH
 	tristate "DH (Diffie-Hellman)"

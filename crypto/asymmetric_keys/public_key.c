@@ -403,23 +403,30 @@ int public_key_verify_signature(const struct public_key *pkey,
 	if (sig->pkey_algo) {
 		if (strcmp(pkey->pkey_algo, sig->pkey_algo) != 0 &&
 		    (strncmp(pkey->pkey_algo, "ecdsa-", 6) != 0 ||
-		     strcmp(sig->pkey_algo, "ecdsa") != 0))
-			return -EKEYREJECTED;
+		     strcmp(sig->pkey_algo, "ecdsa") != 0)) {
+				printk(" <<< exit pk verify 1");
+				return -EKEYREJECTED;
+			 }
 	}
 
 	ret = software_key_determine_akcipher(pkey, sig->encoding,
 					      sig->hash_algo, alg_name,
 					      &issig, kernel_pkey_verify);
-	if (ret < 0)
+	if (ret < 0) {
+		printk(" <<< exit pk verify 2");
 		return ret;
+	}
 
 	tfm = crypto_alloc_sig(alg_name, 0, 0);
-	if (IS_ERR(tfm))
+	if (IS_ERR(tfm)) {
+		printk(" <<< exit pk verify 3");
 		return PTR_ERR(tfm);
+	}
 
 	key = kmalloc(pkey->keylen + sizeof(u32) * 2 + pkey->paramlen,
 		      GFP_KERNEL);
 	if (!key) {
+				printk(" <<< exit pk verify 4");
 		ret = -ENOMEM;
 		goto error_free_tfm;
 	}
@@ -437,6 +444,7 @@ int public_key_verify_signature(const struct public_key *pkey,
 	if (ret)
 		goto error_free_key;
 
+				printk(" <<< calling verify");
 	ret = crypto_sig_verify(tfm, sig->s, sig->s_size,
 				sig->digest, sig->digest_size);
 

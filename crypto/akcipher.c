@@ -233,9 +233,11 @@ EXPORT_SYMBOL_GPL(crypto_akcipher_sync_prep);
 
 int crypto_akcipher_sync_post(struct crypto_akcipher_sync_data *data, int err)
 {
+				printk(" <<< crypto_akcipher_sync_post");
 	err = crypto_wait_req(err, &data->cwait);
 	if (data->dst)
 		memcpy(data->dst, data->buf, data->dlen);
+				printk(" <<< crypto_akcipher_sync_post 2");
 	data->dlen = data->req->dst_len;
 	kfree_sensitive(data->req);
 	return err;

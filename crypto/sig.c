@@ -115,6 +115,7 @@ int crypto_sig_verify(struct crypto_sig *tfm,
 		      const void *src, unsigned int slen,
 		      const void *digest, unsigned int dlen)
 {
+				printk(" <<< crypto_sig_verify");
 	struct crypto_akcipher **ctx = crypto_sig_ctx(tfm);
 	struct crypto_akcipher_sync_data data = {
 		.tfm = *ctx,
@@ -124,12 +125,14 @@ int crypto_sig_verify(struct crypto_sig *tfm,
 	};
 	int err;
 
+				printk(" <<< crypto_sig_verify 2");
 	err = crypto_akcipher_sync_prep(&data);
 	if (err)
 		return err;
 
 	memcpy(data.buf + slen, digest, dlen);
 
+				printk(" <<< crypto_sig_verify 3");
 	return crypto_akcipher_sync_post(&data,
 					 crypto_akcipher_verify(data.req));
 }

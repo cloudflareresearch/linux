@@ -446,12 +446,16 @@ static inline int crypto_akcipher_sign(struct akcipher_request *req)
  */
 static inline int crypto_akcipher_verify(struct akcipher_request *req)
 {
+	printk(" <<< crypto_akcipher_verify 1\n");
 	struct crypto_akcipher *tfm = crypto_akcipher_reqtfm(req);
+	printk(" <<< crypto_akcipher_verify 2\n");
 	struct akcipher_alg *alg = crypto_akcipher_alg(tfm);
+	printk(" <<< crypto_akcipher_verify 3\n");
 
 	if (IS_ENABLED(CONFIG_CRYPTO_STATS))
 		atomic64_inc(&akcipher_get_stat(alg)->verify_cnt);
 
+	printk(" <<< crypto_akcipher_verify 4\n");
 	return crypto_akcipher_errstat(alg, alg->verify(req));
 }
 

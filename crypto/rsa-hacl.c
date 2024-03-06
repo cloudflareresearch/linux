@@ -30,11 +30,13 @@ struct hacl_rsa_key {
 
 static inline struct hacl_rsa_key *rsa_get_key(struct crypto_akcipher *tfm)
 {
+	printk(" >>> rsa_get_key\n");
 	return akcipher_tfm_ctx(tfm);
 }
 
 static int rsa_enc(struct akcipher_request *req)
 {
+	printk(" >>> rsa_enc\n");
 	struct crypto_akcipher *tfm = crypto_akcipher_reqtfm(req);
 	const struct hacl_rsa_key *pkey = rsa_get_key(tfm);
 	int ret = 0;
@@ -44,7 +46,10 @@ static int rsa_enc(struct akcipher_request *req)
 		goto done;
 	}
 	unsigned int plain_len = (pkey->modBits - 1)/8 + 1;
+	printk(" >>> plain_len (bits: %d) %d\n", pkey->modBits, plain_len);
 	unsigned int cipher_len = (pkey->modBits - 2)/8 + 1;
+	printk(" >>> cipher_len (bits: %d) %d\n", pkey->modBits, cipher_len);
+	printk(" >>> req src_len: %d | req->dst_len: %d\n", req->src_len, req->dst_len);
 
 	if (req->src_len != plain_len || req->dst_len != cipher_len) {
 		ret = -EINVAL;
@@ -81,6 +86,7 @@ static int rsa_enc(struct akcipher_request *req)
 
 static int rsa_dec(struct akcipher_request *req)
 {
+	printk(" >>> rsa_dec\n");
 	struct crypto_akcipher *tfm = crypto_akcipher_reqtfm(req);
 	const struct hacl_rsa_key *skey = rsa_get_key(tfm);
 	int ret = 0;
@@ -128,6 +134,7 @@ static int rsa_dec(struct akcipher_request *req)
 
 static void rsa_free_key(struct hacl_rsa_key *key)
 {
+	printk(" >>> rsa_free_key\n");
 	kfree(key->db);
 	kfree(key->eb);
 	kfree(key->nb);
@@ -139,25 +146,32 @@ static void rsa_free_key(struct hacl_rsa_key *key)
 static int rsa_set_pub_key(struct crypto_akcipher *tfm, const void *key,
 			   unsigned int keylen)
 {
+	printk(" >>> rsa_set_pub_key\n");
 	struct hacl_rsa_key *pkey = rsa_get_key(tfm);
 	struct rsa_key raw_key = {0};
 	
 	int ret = 0;
 
 	/* Free the old MPI key if any */
+	// printk(" >>> freeing pkey\n");
 	rsa_free_key(pkey);
 
+	// printk(" >>> parsin key\n");
 	ret = rsa_parse_pub_key(&raw_key, key, keylen);
 	if (ret)
 		return ret;
+	// printk(" >>> parsed key\n");
 
 	pkey->modBits = raw_key.n_sz * 8;
 	pkey->eBits = raw_key.e_sz * 8;
 	pkey->nb = (uint8_t*) raw_key.n;
 	pkey->eb = (uint8_t*) raw_key.e;
 
-	if (!pkey->nb || !pkey->eb)
+	if (!pkey->nb || !pkey->eb) {
+		// printk(" >>>  ERROR\n");
 		goto err;
+	}
+	// printk(" >>>  DONE %d\n", ret);
 
 	return ret;
 	
@@ -169,6 +183,7 @@ err:
 static int rsa_set_priv_key(struct crypto_akcipher *tfm, const void *key,
 			   unsigned int keylen)
 {
+	printk(" >>> rsa_set_priv_key\n");
 	struct hacl_rsa_key *skey = rsa_get_key(tfm);
 	struct rsa_key raw_key = {0};
 	
@@ -200,6 +215,7 @@ err:
 
 static unsigned int rsa_max_size(struct crypto_akcipher *tfm)
 {
+	printk(" >>> rsa_max_size\n");
 	struct hacl_rsa_key *pkey = akcipher_tfm_ctx(tfm);
 
 	return pkey->modBits;
@@ -207,6 +223,7 @@ static unsigned int rsa_max_size(struct crypto_akcipher *tfm)
 
 static void rsa_exit_tfm(struct crypto_akcipher *tfm)
 {
+	printk(" >>> rsa_exit_tfm\n");
 	struct hacl_rsa_key *pkey = akcipher_tfm_ctx(tfm);
 
 	rsa_free_key(pkey);
@@ -230,23 +247,32 @@ static struct akcipher_alg hacl_rsa = {
 
 static int __init hacl_rsa_init(void)
 {
+	printk(" >>> hacl_rsa_init\n");
 	int err;
 
 	err = crypto_register_akcipher(&hacl_rsa);
-	if (err)
+	if (err) {
 		return err;
+	}
+
+	err = crypto_register_template(&rsa_pkcs1pad_tmpl);
+	if (err) {
+		crypto_unregister_akcipher(&hacl_rsa);
+		return err;
+	}
 
 	return 0;
 }
 
 static void __exit hacl_rsa_exit(void)
 {
+	crypto_unregister_template(&rsa_pkcs1pad_tmpl);
 	crypto_unregister_akcipher(&hacl_rsa);
 }
 
 subsys_initcall(hacl_rsa_init);
 module_exit(hacl_rsa_exit);
 MODULE_ALIAS_CRYPTO("rsa");
-MODULE_ALIAS_CRYPTO("rsa-hacl");
-MODULE_LICENSE("GPLv2 or MIT");
+// MODULE_ALIAS_CRYPTO("rsa-hacl");
+MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Formally Verified RSA algorithm from HACL*");

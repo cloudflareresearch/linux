@@ -527,21 +527,29 @@ out:
  */
 static int pkcs1pad_verify(struct akcipher_request *req)
 {
+	printk(" --- pkcs1pad_verify 1");
 	struct crypto_akcipher *tfm = crypto_akcipher_reqtfm(req);
 	struct pkcs1pad_ctx *ctx = akcipher_tfm_ctx(tfm);
 	struct pkcs1pad_request *req_ctx = akcipher_request_ctx(req);
 	const unsigned int sig_size = req->src_len;
 	const unsigned int digest_size = req->dst_len;
 	int err;
+	printk(" --- pkcs1pad_verify 2");
+	printk(" --- key_size %d", ctx->key_size);
+	printk(" --- sig_size %d", sig_size);
+	printk(" --- digest_size %d", digest_size);
+	printk(" --- dst %p", req->dst);
 
 	if (WARN_ON(req->dst) || WARN_ON(!digest_size) ||
 	    !ctx->key_size || sig_size != ctx->key_size)
 		return -EINVAL;
 
+	printk(" --- pkcs1pad_verify 3");
 	req_ctx->out_buf = kmalloc(ctx->key_size + digest_size, GFP_KERNEL);
 	if (!req_ctx->out_buf)
 		return -ENOMEM;
 
+	printk(" --- pkcs1pad_verify 4");
 	pkcs1pad_sg_set_buf(req_ctx->out_sg, req_ctx->out_buf,
 			    ctx->key_size, NULL);
 
@@ -549,10 +557,12 @@ static int pkcs1pad_verify(struct akcipher_request *req)
 	akcipher_request_set_callback(&req_ctx->child_req, req->base.flags,
 			pkcs1pad_verify_complete_cb, req);
 
+	printk(" --- pkcs1pad_verify 5");
 	/* Reuse input buffer, output to a new buffer */
 	akcipher_request_set_crypt(&req_ctx->child_req, req->src,
 				   req_ctx->out_sg, sig_size, ctx->key_size);
 
+	printk(" --- pkcs1pad_verify 6");
 	err = crypto_akcipher_encrypt(&req_ctx->child_req);
 	if (err != -EINPROGRESS && err != -EBUSY)
 		return pkcs1pad_verify_complete(req, err);
