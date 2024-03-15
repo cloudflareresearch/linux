@@ -15,7 +15,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y flex bison bc cpio busybox-static kmod
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Build kernel & Modules
         run: |
           cp zeta/test-artifacts/config-um .config
@@ -38,7 +38,7 @@ jobs:
           sudo ./linux initrd=uml-initramfs.cpio.gz > tcrypt.out 2>&1
           cat tcrypt.out
       - name: Collect artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: success() || failure()
         with:
           name: tcrypt_job
