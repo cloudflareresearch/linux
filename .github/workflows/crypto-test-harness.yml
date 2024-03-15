@@ -43,3 +43,40 @@ jobs:
         with:
           name: tcrypt_job
           path: ./tcrypt.out
+  cfgcheck:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bc libelf-dev pahole
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: allnoconfig
+        continue-on-error: true
+        run: |
+          mkdir -p results
+          make mrproper
+          make allnoconfig
+          make -j$(nproc) > results/config-allnoconfig.out 2>&1
+      - name: defconfig
+        continue-on-error: true
+        run: |
+          make mrproper
+          make defconfig
+          make -j$(nproc) > results/config-defconfig.out 2>&1
+      - name: defconfig + config-integration
+        continue-on-error: true
+        run: |
+          cp zeta/test-artifacts/config-integration .
+          make mrproper
+          make defconfig
+          ./scripts/kconfig/merge_config.sh -m .config config-integration
+          make olddefconfig
+          make -j$(nproc) > results/config-integration.out 2>&1
+      - name: Collect artifacts
+        uses: actions/upload-artifact@v4
+        if: success() || failure()
+        with:
+          name: cfgcheck_job
+          path: results
