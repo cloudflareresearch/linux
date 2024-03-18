@@ -4,10 +4,15 @@ compile: rsa.go rsa_test.go
 	go build -o example.exe
 	go test -c -o bench.exe
 
-example: example.exe
+load_parser:
+	modprobe pkcs8_key_parser
+
+example: rsa.go
+	go build -o example.exe
 	./example.exe
 
-benchmark: bench.exe
+benchmark: rsa.go rsa_test.go
+	go test -c -o bench.exe
 	./bench.exe -test.v -test.bench=.
 
 clean:
