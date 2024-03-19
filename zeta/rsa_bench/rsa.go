@@ -13,10 +13,12 @@ import (
 
 type KeySerial int32
 type Keyring int32
+type KeyOps = uintptr
 
 const (
 	KEY_SPEC_PROCESS_KEYRING Keyring = -2
-	KEYCTL_PKEY_SIGN                 = 27
+	KEYCTL_PKEY_SIGN         KeyOps  = 27
+	KEYCTL_PKEY_VERIFY       KeyOps  = 28
 )
 
 var (
@@ -70,6 +72,27 @@ func (key KeySerial) Sign(info, digest, signature []byte) error {
 	return errno
 }
 
+func (key KeySerial) Verify(info, digest, signature []byte) error {
+	var params pkeyParams
+	params.key_id = key
+	params.in_len = uint32(len(digest))
+	params.out_or_in2_len = uint32(len(signature))
+
+	_, _, errno := syscall.Syscall6(
+		syscall.SYS_KEYCTL, KEYCTL_PKEY_VERIFY,
+		uintptr(unsafe.Pointer(&params)),
+		uintptr(unsafe.Pointer(&info[0])),
+		uintptr(unsafe.Pointer(&digest[0])),
+		uintptr(unsafe.Pointer(&signature[0])),
+		uintptr(0),
+	)
+	if errno == 0 {
+		return nil
+	}
+
+	return errno
+}
+
 func loadKeyToKernel(key crypto.PrivateKey) KeySerial {
 	pkcs8, err := x509.MarshalPKCS8PrivateKey(key)
 	if err != nil {
@@ -108,8 +131,14 @@ func main() {
 	}
 	log.Printf("Signature from Kernel: %x...", signature[:10])
 
+	err = keyInKernel.Verify(sha256pkcs1, digest[:], signature[:])
+	if err != nil {
+		log.Fatalf("failed to verify the digest: %v", err)
+	}
+	log.Printf("Valid signature from Kernel: %v", err == nil)
+
 	err = rsa.VerifyPKCS1v15(&priv.PublicKey, crypto.SHA256, digest[:], signature[:])
-	log.Printf("Valid signature: %v", err == nil)
+	log.Printf("Valid signature from Go: %v", err == nil)
 	if err != nil {
 		log.Fatalf("failed to verify the signature: %v", err)
 	}
