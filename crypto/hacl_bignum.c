@@ -1037,18 +1037,7 @@ bn_mont_reduction_u64(uint32_t len, uint64_t *n, uint64_t nInv, uint64_t *c, uin
     uint64_t c1 = 0ULL;
     for (uint32_t i = 0U; i < len / 4U; i++)
     {
-      uint64_t a_i = n[4U * i];
-      uint64_t *res_i0 = res_j0 + 4U * i;
-      c1 = Hacl_Bignum_Base_mul_wide_add2_u64(a_i, qj, c1, res_i0);
-      uint64_t a_i0 = n[4U * i + 1U];
-      uint64_t *res_i1 = res_j0 + 4U * i + 1U;
-      c1 = Hacl_Bignum_Base_mul_wide_add2_u64(a_i0, qj, c1, res_i1);
-      uint64_t a_i1 = n[4U * i + 2U];
-      uint64_t *res_i2 = res_j0 + 4U * i + 2U;
-      c1 = Hacl_Bignum_Base_mul_wide_add2_u64(a_i1, qj, c1, res_i2);
-      uint64_t a_i2 = n[4U * i + 3U];
-      uint64_t *res_i = res_j0 + 4U * i + 3U;
-      c1 = Hacl_Bignum_Base_mul_wide_add2_u64(a_i2, qj, c1, res_i);
+      c1 = bn_mul_add4_u64(n+4*i,qj,res_j0+4*i,c1);
     }
     for (uint32_t i = len / 4U * 4U; i < len; i++)
     {
@@ -1293,18 +1282,7 @@ Hacl_Bignum_AlmostMontgomery_bn_almost_mont_reduction_u64(
     uint64_t c1 = 0ULL;
     for (uint32_t i = 0U; i < len / 4U; i++)
     {
-      uint64_t a_i = n[4U * i];
-      uint64_t *res_i0 = res_j0 + 4U * i;
-      c1 = Hacl_Bignum_Base_mul_wide_add2_u64(a_i, qj, c1, res_i0);
-      uint64_t a_i0 = n[4U * i + 1U];
-      uint64_t *res_i1 = res_j0 + 4U * i + 1U;
-      c1 = Hacl_Bignum_Base_mul_wide_add2_u64(a_i0, qj, c1, res_i1);
-      uint64_t a_i1 = n[4U * i + 2U];
-      uint64_t *res_i2 = res_j0 + 4U * i + 2U;
-      c1 = Hacl_Bignum_Base_mul_wide_add2_u64(a_i1, qj, c1, res_i2);
-      uint64_t a_i2 = n[4U * i + 3U];
-      uint64_t *res_i = res_j0 + 4U * i + 3U;
-      c1 = Hacl_Bignum_Base_mul_wide_add2_u64(a_i2, qj, c1, res_i);
+      c1 = bn_mul_add4_u64(n+4*i,qj,res_j0+4*i,c1);
     }
     for (uint32_t i = len / 4U * 4U; i < len; i++)
     {

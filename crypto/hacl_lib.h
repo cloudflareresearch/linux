@@ -115,27 +115,40 @@ Hacl_IntTypes_Intrinsics_sub_borrow_u32(uint32_t cin, uint32_t x, uint32_t y, ui
 
 
 static inline uint64_t
-Hacl_IntTypes_Intrinsics_sub_borrow_u64(uint64_t cin, uint64_t x, uint64_t y, uint64_t *r)
+Hacl_IntTypes_Intrinsics_add_carry_u64(uint64_t cin, uint64_t x, uint64_t y, uint64_t *r)
 {
-  uint64_t res = x - y - cin;
-  uint64_t
-  c =
-    ((FStar_UInt64_gte_mask(res, x) & ~FStar_UInt64_eq_mask(res, x))
-    | (FStar_UInt64_eq_mask(res, x) & cin))
-    & (uint64_t)1U;
+  u128 res = (u128) x + (u128) y + (cin & 1);
+  u64 c = (res >> 64) & 1;
   r[0U] = res;
   return c;
 }
 
 static inline uint64_t
-Hacl_IntTypes_Intrinsics_add_carry_u64(uint64_t cin, uint64_t x, uint64_t y, uint64_t *r)
+Hacl_IntTypes_Intrinsics_sub_borrow_u64(uint64_t cin, uint64_t x, uint64_t y, uint64_t *r)
 {
-  uint64_t res = x + cin + y;
-  uint64_t
-  c = (~FStar_UInt64_gte_mask(res, x) | (FStar_UInt64_eq_mask(res, x) & cin)) & (uint64_t)1U;
+  u128 res = (u128) x - (u128) y - (cin & 1);
+  u64 c = (res >> 64) & 1;
   r[0U] = res;
   return c;
 }
+
+/*
+static inline uint64_t
+Hacl_IntTypes_Intrinsics_add_carry_u64(uint64_t cin, uint64_t x, uint64_t y, uint64_t *r)
+{
+  uint64_t cout = 0;
+  *r = __builtin_addcll(x,y,cin,&cout);
+  return cout;
+}
+
+static inline uint64_t
+Hacl_IntTypes_Intrinsics_sub_borrow_u64(uint64_t cin, uint64_t x, uint64_t y, uint64_t *r)
+{
+  uint64_t cout = 0;
+  *r = __builtin_subcll(x,y,cin,&cout);
+  return cout;
+}
+*/
 
 #define Lib_IntTypes_Intrinsics_sub_borrow_u32(x1, x2, x3, x4) \
     (Hacl_IntTypes_Intrinsics_sub_borrow_u32(x1, x2, x3, x4))
