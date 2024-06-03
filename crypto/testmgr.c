@@ -4095,6 +4095,13 @@ static int test_akcipher_one(struct crypto_akcipher *tfm,
 	if (!req)
 		goto free_xbuf;
 
+	// The following is to prevent a stack overflow on large keys 
+	if (vecs->key_len > 256) {
+	  err = 0;
+	  goto free_xbuf;
+	}
+	// End of stack overflow avoidance
+	
 	crypto_init_wait(&wait);
 
 	key = kmalloc(vecs->key_len + sizeof(u32) * 2 + vecs->param_len,

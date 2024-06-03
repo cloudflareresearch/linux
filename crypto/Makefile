@@ -38,10 +38,19 @@ $(obj)/rsa_helper.o: $(obj)/rsapubkey.asn1.h $(obj)/rsaprivkey.asn1.h
 
 rsa_generic-y := rsapubkey.asn1.o
 rsa_generic-y += rsaprivkey.asn1.o
-rsa_generic-y += rsa.o
 rsa_generic-y += rsa_helper.o
+rsa_generic-y += rsa.o
 rsa_generic-y += rsa-pkcs1pad.o
-obj-$(CONFIG_CRYPTO_RSA) += rsa_generic.o
+obj-$(CONFIG_CRYPTO_RSA_GENERIC) += rsa_generic.o
+
+rsa_hacl-y := rsapubkey.asn1.o
+rsa_hacl-y += rsaprivkey.asn1.o
+rsa_hacl-y += hacl_bignum.o
+rsa_hacl-y += rsa-hacl-generated.o
+rsa_hacl-y += rsa_helper.o
+rsa_hacl-y += rsa-hacl.o
+rsa_hacl-y += rsa-pkcs1pad.o
+obj-$(CONFIG_CRYPTO_RSA_HACL) += rsa_hacl.o
 
 $(obj)/sm2signature.asn1.o: $(obj)/sm2signature.asn1.c $(obj)/sm2signature.asn1.h
 $(obj)/sm2.o: $(obj)/sm2signature.asn1.h
@@ -51,9 +60,12 @@ sm2_generic-y += sm2.o
 
 obj-$(CONFIG_CRYPTO_SM2) += sm2_generic.o
 
+$(obj)/ecprivkey.asn1.o: $(obj)/ecprivkey.asn1.c $(obj)/ecprivkey.asn1.h
 $(obj)/ecdsasignature.asn1.o: $(obj)/ecdsasignature.asn1.c $(obj)/ecdsasignature.asn1.h
-$(obj)/ecdsa.o: $(obj)/ecdsasignature.asn1.h
+$(obj)/ecdsa.o: $(obj)/ecdsasignature.asn1.h $(obj)/ecprivkey.asn1.h
+ecdsa_generic-y += p256-hacl-generated.o
 ecdsa_generic-y += ecdsa.o
+ecdsa_generic-y += ecprivkey.asn1.o
 ecdsa_generic-y += ecdsasignature.asn1.o
 obj-$(CONFIG_CRYPTO_ECDSA) += ecdsa_generic.o
 
@@ -77,8 +89,10 @@ obj-$(CONFIG_CRYPTO_MD5) += md5.o
 obj-$(CONFIG_CRYPTO_RMD160) += rmd160.o
 obj-$(CONFIG_CRYPTO_SHA1) += sha1_generic.o
 obj-$(CONFIG_CRYPTO_SHA256) += sha256_generic.o
+obj-$(CONFIG_CRYPTO_SHA2_HACL) += sha2-hacl-generated.o sha2-hacl.o
 obj-$(CONFIG_CRYPTO_SHA512) += sha512_generic.o
 obj-$(CONFIG_CRYPTO_SHA3) += sha3_generic.o
+obj-$(CONFIG_CRYPTO_SHA3_HACL) += sha3-hacl-generated.o sha3-hacl.o
 obj-$(CONFIG_CRYPTO_SM3) += sm3.o
 obj-$(CONFIG_CRYPTO_SM3_GENERIC) += sm3_generic.o
 obj-$(CONFIG_CRYPTO_STREEBOG) += streebog_generic.o

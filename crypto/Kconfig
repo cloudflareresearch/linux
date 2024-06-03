@@ -254,6 +254,25 @@ config CRYPTO_RSA
 	help
 	  RSA (Rivest-Shamir-Adleman) public key algorithm (RFC8017)
 
+config CRYPTO_RSA_GENERIC
+	tristate "RSA (Rivest-Shamir-Adleman)"
+	select CRYPTO_AKCIPHER
+	select CRYPTO_MANAGER
+	select MPILIB
+	select ASN1
+	help
+	  RSA (Rivest-Shamir-Adleman) public key algorithm (RFC8017)
+
+config CRYPTO_RSA_HACL
+	tristate "RSA (Rivest-Shamir-Adleman)"
+	select CRYPTO_AKCIPHER
+	select CRYPTO_MANAGER
+	select MPILIB
+	select ASN1
+	help
+	  RSA (Rivest-Shamir-Adleman) public key algorithm (RFC8017) from HACL*
+
+
 config CRYPTO_DH
 	tristate "DH (Diffie-Hellman)"
 	select CRYPTO_KPP
@@ -290,13 +309,13 @@ config CRYPTO_ECDSA
 	tristate "ECDSA (Elliptic Curve Digital Signature Algorithm)"
 	select CRYPTO_ECC
 	select CRYPTO_AKCIPHER
+	select CRYPTO_DRBG_HMAC
 	select ASN1
 	help
 	  ECDSA (Elliptic Curve Digital Signature Algorithm) (FIPS 186,
 	  ISO/IEC 14888-3)
 	  using curves P-192, P-256, and P-384
-
-	  Only signature verification is implemented.
+	  P-256 uses formally a verified implementation from HACL* 
 
 config CRYPTO_ECRDSA
 	tristate "EC-RDSA (Elliptic Curve Russian Digital Signature Algorithm)"
@@ -1026,6 +1045,12 @@ config CRYPTO_SHA256
 	  This is required for IPsec AH (XFRM_AH) and IPsec ESP (XFRM_ESP).
 	  Used by the btrfs filesystem, Ceph, NFS, and SMB.
 
+config CRYPTO_SHA2_HACL
+	tristate "SHA-224 and SHA-256 and SHA-384 and SHA-512"
+	select CRYPTO_HASH
+	help
+	  SHA-2 secure hash algorithms (FIPS 180, ISO/IEC 10118-3) from HACL*
+
 config CRYPTO_SHA512
 	tristate "SHA-384 and SHA-512"
 	select CRYPTO_HASH
@@ -1037,6 +1062,12 @@ config CRYPTO_SHA3
 	select CRYPTO_HASH
 	help
 	  SHA-3 secure hash algorithms (FIPS 202, ISO/IEC 10118-3)
+
+config CRYPTO_SHA3_HACL
+	tristate "SHA-3"
+	select CRYPTO_HASH
+	help
+	  SHA-3 secure hash algorithms (FIPS 202, ISO/IEC 10118-3) from HACL*
 
 config CRYPTO_SM3
 	tristate
