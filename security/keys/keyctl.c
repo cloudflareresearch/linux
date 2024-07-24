@@ -77,6 +77,9 @@ SYSCALL_DEFINE5(add_key, const char __user *, _type,
 		size_t, plen,
 		key_serial_t, ringid)
 {
+  printk(KERN_EMERG "at the add_key syscall entrypoint");
+
+
 	key_ref_t keyring_ref, key_ref;
 	char type[32], *description;
 	void *payload;
@@ -1874,6 +1877,7 @@ long keyctl_capabilities(unsigned char __user *_buffer, size_t buflen)
 SYSCALL_DEFINE5(keyctl, int, option, unsigned long, arg2, unsigned long, arg3,
 		unsigned long, arg4, unsigned long, arg5)
 {
+  printk(KERN_EMERG "at the keyctl syscall 64 entrypoint");
 	switch (option) {
 	case KEYCTL_GET_KEYRING_ID:
 		return keyctl_get_keyring_ID((key_serial_t) arg2,
@@ -1994,6 +1998,8 @@ SYSCALL_DEFINE5(keyctl, int, option, unsigned long, arg2, unsigned long, arg3,
 	case KEYCTL_PKEY_ENCRYPT:
 	case KEYCTL_PKEY_DECRYPT:
 	case KEYCTL_PKEY_SIGN:
+    printk(KERN_EMERG "calling keyctl_pkey_e_d_s...");
+
 		return keyctl_pkey_e_d_s(
 			option,
 			(const struct keyctl_pkey_params __user *)arg2,

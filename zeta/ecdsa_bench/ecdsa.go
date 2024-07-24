@@ -9,6 +9,7 @@ import (
 	"crypto/x509"
 	"log"
 	"syscall"
+	"time"
 	"unsafe"
 )
 
@@ -27,7 +28,7 @@ const (
 var (
 	keyTypeAsym = []byte("asymmetric\x00")
 	sha256pkcs1 = []byte("enc=pkcs1 hash=sha256\x00")
-	signInfo    = []byte("enc=raw hash=sha256\x00")
+	signInfo    = []byte("enc=x962\x00")
 )
 
 func (keyring Keyring) LoadAsym(desc string, payload []byte) (KeySerial, error) {
@@ -73,6 +74,7 @@ func (key KeySerial) Sign(info, digest, signature []byte) error {
 		return nil
 	}
 
+	time.Sleep(time.Second / 3)
 	return errno
 }
 

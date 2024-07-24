@@ -611,6 +611,8 @@ bool lookup_user_key_possessed(const struct key *key,
 key_ref_t lookup_user_key(key_serial_t id, unsigned long lflags,
 			  enum key_need_perm need_perm)
 {
+  printk("at the keyctl lookup_user_key entrypoint");
+
 	struct keyring_search_context ctx = {
 		.match_data.cmp		= lookup_user_key_possessed,
 		.match_data.lookup_type	= KEYRING_SEARCH_LOOKUP_DIRECT,
@@ -623,6 +625,7 @@ key_ref_t lookup_user_key(key_serial_t id, unsigned long lflags,
 	int ret;
 
 try_again:
+  printk("at the try_again label in lookup_user_key with id=%d\n", id);
 	ctx.cred = get_current_cred();
 	key_ref = ERR_PTR(-ENOKEY);
 
@@ -742,10 +745,12 @@ try_again:
 		break;
 
 	default:
+    printk("id is not in range -8...=-1, etting key_ref to EINVAL\n");
 		key_ref = ERR_PTR(-EINVAL);
 		if (id < 1)
 			goto error;
 
+    printk("calling key_lookup\n");
 		key = key_lookup(id);
 		if (IS_ERR(key)) {
 			key_ref = ERR_CAST(key);
@@ -807,6 +812,7 @@ try_again:
 	key->last_used_at = ktime_get_real_seconds();
 
 error:
+  printk("at error label, returning\n");
 	put_cred(ctx.cred);
 	return key_ref;
 
