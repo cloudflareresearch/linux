@@ -7,6 +7,16 @@ if [ "$name" = "" ]; then
   exit
 fi
 
+# prepare home bin dir
+workdir="$(dirname -- "$0")"
+workdir="$(cd -- "$workdir"; pwd)"
+kerneldir="$(dirname -- "$workdir")"
+
+rm -- "$workdir/virtme-home/bin/"*
+ln -s "$kerneldir/zeta/rsa_bench/rsa" "$workdir/virtme-home/bin/rsa"
+ln -s "$kerneldir/zeta/ecdsa_bench/ecdsa" "$workdir/virtme-home/bin/ecdsa"
+ln -s "$kerneldir/zeta/ecdsa_bench/ecdsa.test" "$workdir/virtme-home/bin/ecdsa.test"
+
 mkdir -p "WORK/$name"
 
 # using clang because that's what the clangd intros said i must do
