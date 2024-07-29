@@ -11,9 +11,11 @@ import (
 	"unsafe"
 )
 
-type KeySerial int32
-type Keyring int32
-type KeyOps = uintptr
+type (
+	KeySerial int32
+	Keyring   int32
+	KeyOps    = uintptr
+)
 
 const (
 	KEY_SPEC_PROCESS_KEYRING Keyring = -2
@@ -104,7 +106,7 @@ func loadKeyToKernel(key crypto.PrivateKey) KeySerial {
 		log.Fatalf("failed to load the private key into the keyring: %v", err)
 	}
 
-	log.Printf("Loaded key to the kernel with ID: %v", serial)
+	log.Printf("Loaded key of length %v to the kernel with ID: %v", len(pkcs8), serial)
 
 	return serial
 }

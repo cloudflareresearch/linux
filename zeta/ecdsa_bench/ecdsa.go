@@ -110,7 +110,7 @@ func loadKeyToKernel(key crypto.PrivateKey) KeySerial {
 		log.Fatalf("failed to load the private key into the keyring: %v", err)
 	}
 
-	log.Printf("Loaded key to the kernel with ID: %v", serial)
+	log.Printf("Loaded key of length %v to the kernel with ID: %v", len(pkcs8), serial)
 
 	return serial
 }

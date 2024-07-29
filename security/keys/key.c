@@ -918,6 +918,13 @@ static key_ref_t __key_create_or_update(key_ref_t keyring_ref,
 			perm |= KEY_POS_WRITE;
 	}
 
+
+
+  /*
+   * XXX(keks): This is where we start building the key!
+   *
+   * */
+
 	/* allocate a new key */
 	key = key_alloc(index_key.type, index_key.description,
 			cred->fsuid, cred->fsgid, cred, perm, flags, NULL);

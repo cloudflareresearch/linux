@@ -42,18 +42,23 @@ EXPORT_SYMBOL_GPL(public_key_signature_free);
 int query_asymmetric_key(const struct kernel_pkey_params *params,
 			 struct kernel_pkey_query *info)
 {
+  printk("in query_asymmetric_key\n");
 	const struct asymmetric_key_subtype *subtype;
 	struct key *key = params->key;
 	int ret;
 
 	pr_devel("==>%s()\n", __func__);
 
+  printk("  is asymmetric key type? %d\n", key->type == &key_type_asymmetric);
 	if (key->type != &key_type_asymmetric)
 		return -EINVAL;
 	subtype = asymmetric_key_subtype(key);
+  printk("  subtype ptr: %p\n", subtype);
+  printk("  payload.data[0]: %p\n", key->payload.data[0]);
 	if (!subtype ||
 	    !key->payload.data[0])
 		return -EINVAL;
+  printk("  subtype name: %s\n", subtype->name);
 	if (!subtype->query)
 		return -ENOTSUPP;
 

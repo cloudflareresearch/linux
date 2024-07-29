@@ -9,6 +9,11 @@ fi
 
 mkdir -p "WORK/$name"
 
-make -j 12
-/bin/cp -f arch/x86_64/boot/bzImage "WORK/$name"
-virtme-run --kimg "WORK/$name/bzImage" -a ignore_loglevel --pwd
+# using clang because that's what the clangd intros said i must do
+make CC=clang -j 12
+/bin/cp arch/x86_64/boot/bzImage "WORK/$name"
+virtme-run \
+  --kimg "WORK/$name/bzImage" \
+  -a ignore_loglevel \
+  --rodir=/tmp/roothome=$(pwd)/WORK/virtme-home \
+  --pwd

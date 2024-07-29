@@ -142,6 +142,7 @@ static int keyctl_pkey_params_get_2(const struct keyctl_pkey_params __user *_par
   printk("    hash_algo: %s", params->hash_algo);
   printk("    info: %s", params->info);
   printk("    in_len: %i", params->in_len);
+  printk("    key.type.name: %s", params->key->type->name);
 
   printk("calling asym_query... \n");
 	ret = params->key->type->asym_query(params, &info);
