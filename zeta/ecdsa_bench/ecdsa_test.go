@@ -55,6 +55,39 @@ func TestSignInKernelVerifyInGo(t *testing.T) {
 	}
 }
 
+func TestSignAndVerifyInKernel(t *testing.T) {
+	var (
+		msg       = []byte("hello world")
+		digest    = sha256.Sum256(msg)
+		signature [72]byte
+	)
+
+	priv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		t.Fatalf("failed to generate private key: %v", err)
+	}
+
+	keyInKernel := loadKeyToKernel(priv)
+
+	n, err := keyInKernel.Sign(signInfo, digest[:], signature[:])
+	if err != nil {
+		t.Fatalf("failed to sign the digest: %v", err)
+	}
+
+	fmt.Printf("got signature %x (len: %v, n: %v)\n", signature, len(signature), n)
+	fmt.Printf("got signature %x\n", signature[:n])
+
+	err = keyInKernel.Verify(signInfo, digest[:], signature[:n])
+	if err != nil {
+		t.Logf("failed to verify the signature using pre-hashed: %v, trying with sha256...", err)
+		digestDigest := sha256.Sum256(digest[:])
+		err = keyInKernel.Verify(signInfo, digestDigest[:], signature[:n])
+		if err != nil {
+			t.Fatalf("failed to verify the signature with sha256 as well: %v", err)
+		}
+	}
+}
+
 func BenchmarkECDSAKernelSign(b *testing.B) {
 	priv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
