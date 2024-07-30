@@ -355,6 +355,8 @@ static int asn1_encode_signature_sg(struct akcipher_request *req,
 		needed++;
 
 	if (req->dst_len < needed) {
+		printk("dst_len is less than needed: %i < %lu", req->dst_len,
+		       needed);
 		req->dst_len = needed;
 		return -EOVERFLOW;
 	}
@@ -413,6 +415,7 @@ static int asn1_encode_signature_sg(struct akcipher_request *req,
 
 static int ecdsa_sign(struct akcipher_request *req)
 {
+	printk("in ecdsa_sign\n");
 	struct crypto_akcipher *tfm = crypto_akcipher_reqtfm(req);
 	struct ecc_ctx *ctx = akcipher_tfm_ctx(tfm);
 	size_t keylen = ctx->curve->g.ndigits << ECC_DIGITS_TO_BYTES_SHIFT;
@@ -442,11 +445,12 @@ static int ecdsa_sign(struct akcipher_request *req)
 	if (IS_ERR(rng))
 		return PTR_ERR(rng);
 
+	printk("  curve name: %s\n", ctx->curve->name);
 	if (strncmp(ctx->curve->name, "nist_256", 8) == 0) {
 		u8 private_key[32];
 		u8 signature[64];
 		u8 nonce[32];
-		ecc_swap_digits(ctx->d, (u64*)private_key, 2);
+		ecc_swap_digits(ctx->d, (u64 *)private_key, 4);
 		ret = rfc6979_gen_k_hacl(ctx, rng, nonce);
 		if (ret) {
 			goto alloc_rng;
@@ -456,6 +460,7 @@ static int ecdsa_sign(struct akcipher_request *req)
 		do {
 			if (Hacl_P256_ecdsa_sign_p256_without_hash(signature, req->dst_len,
 													   rawhash_k, private_key, nonce)) {
+			printk("  calling Hacl_P256_ecdsa_sign_p256_without_hash\n");
 				ret = 0;
 			} else {
 				ret = -EAGAIN;
@@ -463,8 +468,8 @@ static int ecdsa_sign(struct akcipher_request *req)
 		} while (ret == -EAGAIN);
 		/* Encode the signature. Note that this could be more efficient when
 		   done directly and not first converting it to u64s. */
-		ecc_swap_digits(signature, sig_ctx.r, 2);
-		ecc_swap_digits(signature + 32, sig_ctx.s, 2);
+		ecc_swap_digits(signature, sig_ctx.r, 4);
+		ecc_swap_digits(signature + 32, sig_ctx.s, 4);
 		ret = asn1_encode_signature_sg(req, &sig_ctx, rawhash_k);
 	} else {
 		ecc_swap_digits((u64 *)rawhash_k, hash, ctx->curve->g.ndigits);
@@ -523,6 +528,7 @@ static int ecdsa_ecc_ctx_reset(struct ecc_ctx *ctx)
  */
 static int ecdsa_set_pub_key(struct crypto_akcipher *tfm, const void *key, unsigned int keylen)
 {
+	printk("ecdsa_set_pub_key: enter fun");
 	struct ecc_ctx *ctx = akcipher_tfm_ctx(tfm);
 	const unsigned char *d = key;
 	const u64 *digits = (const u64 *)&d[1];
@@ -597,6 +603,8 @@ int ecc_get_priv_params(void *context, size_t hdrlen, unsigned char tag,
 			const void *value, size_t vlen)
 {
 	struct ecc_ctx *ctx = context;
+
+	printk("getting priv params %zu\n", vlen);
 
 	switch (look_up_OID(value, vlen)) {
 	case OID_id_prime192v1:

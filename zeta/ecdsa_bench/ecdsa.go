@@ -27,8 +27,7 @@ const (
 
 var (
 	keyTypeAsym = []byte("asymmetric\x00")
-	sha256pkcs1 = []byte("enc=pkcs1 hash=sha256\x00")
-	signInfo    = []byte("enc=x962\x00")
+	signInfo    = []byte("enc=x962 hash=sha256\x00")
 )
 
 func (keyring Keyring) LoadAsym(desc string, payload []byte) (KeySerial, error) {
@@ -56,7 +55,7 @@ type pkeyParams struct {
 	__spare        [7]uint32
 }
 
-func (key KeySerial) Sign(info, digest, signature []byte) error {
+func (key KeySerial) Sign(info, digest, signature []byte) (uint64, error) {
 	var params pkeyParams
 	params.key_id = key
 	params.in_len = uint32(len(digest))
@@ -70,12 +69,15 @@ func (key KeySerial) Sign(info, digest, signature []byte) error {
 		uintptr(unsafe.Pointer(&signature[0])),
 		uintptr(0),
 	)
-	if errno == 0 {
-		return nil
-	}
 
 	time.Sleep(time.Second / 3)
-	return errno
+
+	if errno != 0 {
+		return 0, errno
+	}
+
+	length := uint64(signature[1]) + 2
+	return length, nil
 }
 
 func (key KeySerial) Verify(info, digest, signature []byte) error {
@@ -92,6 +94,7 @@ func (key KeySerial) Verify(info, digest, signature []byte) error {
 		uintptr(unsafe.Pointer(&signature[0])),
 		uintptr(0),
 	)
+	time.Sleep(time.Second / 3)
 	if errno == 0 {
 		return nil
 	}
@@ -119,7 +122,7 @@ func main() {
 	var (
 		msg       = []byte("hello world")
 		digest    = sha256.Sum256(msg)
-		signature [64]byte
+		signature [72]byte
 	)
 
 	priv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
@@ -129,13 +132,13 @@ func main() {
 
 	keyInKernel := loadKeyToKernel(priv)
 
-	err = keyInKernel.Sign(signInfo, digest[:], signature[:])
+	n, err := keyInKernel.Sign(signInfo, digest[:], signature[:])
 	if err != nil {
 		log.Fatalf("failed to sign the digest: %v", err)
 	}
 	log.Printf("Signature from Kernel: %x...", signature[:10])
 
-	err = keyInKernel.Verify(signInfo, digest[:], signature[:])
+	err = keyInKernel.Verify(signInfo, digest[:], signature[:n])
 	if err != nil {
 		log.Fatalf("failed to verify the digest: %v", err)
 	}
