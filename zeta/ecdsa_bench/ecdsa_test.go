@@ -6,7 +6,6 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/sha256"
-	"fmt"
 	"testing"
 )
 
@@ -41,17 +40,9 @@ func TestSignInKernelVerifyInGo(t *testing.T) {
 		t.Fatalf("failed to sign the digest: %v", err)
 	}
 
-	fmt.Printf("got signature %x (len: %v, n: %v)\n", signature, len(signature), n)
-	fmt.Printf("got signature %x\n", signature[:n])
-
 	ok := ecdsa.VerifyASN1(&priv.PublicKey, digest[:], signature[:n])
 	if !ok {
-		t.Log("failed to verify the signature using pre-hashed, trying with sha256...")
-		digestDigest := sha256.Sum256(digest[:])
-		ok := ecdsa.VerifyASN1(&priv.PublicKey, digestDigest[:], signature[:])
-		if !ok {
-			t.Fatalf("failed to verify the signature with sha256 as well")
-		}
+		t.Fatalf("failed to verify the signature")
 	}
 }
 
@@ -74,17 +65,9 @@ func TestSignAndVerifyInKernel(t *testing.T) {
 		t.Fatalf("failed to sign the digest: %v", err)
 	}
 
-	fmt.Printf("got signature %x (len: %v, n: %v)\n", signature, len(signature), n)
-	fmt.Printf("got signature %x\n", signature[:n])
-
 	err = keyInKernel.Verify(signInfo, digest[:], signature[:n])
 	if err != nil {
-		t.Logf("failed to verify the signature using pre-hashed: %v, trying with sha256...", err)
-		digestDigest := sha256.Sum256(digest[:])
-		err = keyInKernel.Verify(signInfo, digestDigest[:], signature[:n])
-		if err != nil {
-			t.Fatalf("failed to verify the signature with sha256 as well: %v", err)
-		}
+		t.Fatalf("failed to verify the signature: %v", err)
 	}
 }
 
@@ -122,7 +105,7 @@ func BenchmarkECDSAKernelVerify(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		err := keyInKernel.Verify(signInfo, digest[:], signature[:n])
 		if err != nil {
-			b.Fatalf("failed to sign the digest: %v", err)
+			b.Fatalf("failed to verify the signature: %v", err)
 		}
 	}
 }
@@ -156,7 +139,7 @@ func BenchmarkECDSAGo(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			ok := ecdsa.VerifyASN1(&priv.PublicKey, digest[:], signature[:])
 			if !ok {
-				b.Fatalf("failed to sign the digest: %v", err)
+				b.Fatalf("failed to verify the signature: %v", err)
 			}
 		}
 	})

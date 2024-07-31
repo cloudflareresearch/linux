@@ -8,8 +8,8 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"log"
+	"runtime"
 	"syscall"
-	"time"
 	"unsafe"
 )
 
@@ -70,8 +70,6 @@ func (key KeySerial) Sign(info, digest, signature []byte) (uint64, error) {
 		uintptr(0),
 	)
 
-	time.Sleep(time.Second / 3)
-
 	if errno != 0 {
 		return 0, errno
 	}
@@ -94,7 +92,6 @@ func (key KeySerial) Verify(info, digest, signature []byte) error {
 		uintptr(unsafe.Pointer(&signature[0])),
 		uintptr(0),
 	)
-	time.Sleep(time.Second / 3)
 	if errno == 0 {
 		return nil
 	}
@@ -113,12 +110,12 @@ func loadKeyToKernel(key crypto.PrivateKey) KeySerial {
 		log.Fatalf("failed to load the private key into the keyring: %v", err)
 	}
 
-	log.Printf("Loaded key of length %v to the kernel with ID: %v", len(pkcs8), serial)
-
 	return serial
 }
 
 func main() {
+	runtime.GOMAXPROCS(1)
+
 	var (
 		msg       = []byte("hello world")
 		digest    = sha256.Sum256(msg)
@@ -131,6 +128,7 @@ func main() {
 	}
 
 	keyInKernel := loadKeyToKernel(priv)
+	log.Printf("Loaded key  to the kernel with ID: %v", keyInKernel)
 
 	n, err := keyInKernel.Sign(signInfo, digest[:], signature[:])
 	if err != nil {
@@ -144,7 +142,7 @@ func main() {
 	}
 	log.Printf("Valid signature from Kernel: %v", err == nil)
 
-	ok := ecdsa.VerifyASN1(&priv.PublicKey, digest[:], signature[:])
+	ok := ecdsa.VerifyASN1(&priv.PublicKey, digest[:], signature[:n])
 	log.Printf("Valid signature from Go: %v", ok)
 	if !ok {
 		log.Fatalf("failed to verify the signature: %v", err)
