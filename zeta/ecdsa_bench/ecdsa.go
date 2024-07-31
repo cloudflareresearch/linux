@@ -128,7 +128,7 @@ func main() {
 	}
 
 	keyInKernel := loadKeyToKernel(priv)
-	log.Printf("Loaded key  to the kernel with ID: %v", keyInKernel)
+	log.Printf("Loaded key to the kernel with ID: %v", keyInKernel)
 
 	n, err := keyInKernel.Sign(signInfo, digest[:], signature[:])
 	if err != nil {

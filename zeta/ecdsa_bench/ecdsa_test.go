@@ -7,6 +7,8 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/sha512"
+	"crypto/x509"
+	"encoding/base64"
 	"runtime"
 	"testing"
 )
@@ -25,14 +27,24 @@ func kernelSetup256(priv *ecdsa.PrivateKey) (KeySerial, []byte, []byte) {
 	return keyInKernel, digest[:], signature[:]
 }
 
-func kernelSetup384(priv *ecdsa.PrivateKey) (KeySerial, []byte, []byte) {
+func kernelSetup384(tb testing.TB, priv *ecdsa.PrivateKey) (KeySerial, []byte, []byte) {
 	var (
 		msg       = []byte("hello world")
-		digest    = sha256.Sum256(msg)
+		digest    = sha512.Sum384(msg)
 		signature [256]byte
 	)
 
 	keyInKernel := loadKeyToKernel(priv)
+
+	// begin debug info
+	pkcs8, err := x509.MarshalPKCS8PrivateKey(priv)
+	if err != nil {
+		tb.Fatalf("failed to serialize the private key to PKCS8 blob: %v", err)
+	}
+	tb.Log("added key:")
+	tb.Logf("  base64: %s\n", base64.StdEncoding.EncodeToString(pkcs8))
+	tb.Logf("  hex:    %x\n", pkcs8)
+	// end debug info
 
 	return keyInKernel, digest[:], signature[:]
 }
@@ -40,18 +52,12 @@ func kernelSetup384(priv *ecdsa.PrivateKey) (KeySerial, []byte, []byte) {
 func TestSign384InKernelVerifyInGo(t *testing.T) {
 	runtime.LockOSThread()
 
-	var (
-		msg       = []byte("hello world")
-		digest    = sha512.Sum384(msg)
-		signature [256]byte
-	)
-
 	priv, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
 	if err != nil {
 		t.Fatalf("failed to generate private key: %v", err)
 	}
 
-	keyInKernel := loadKeyToKernel(priv)
+	keyInKernel, digest, signature := kernelSetup384(t, priv)
 
 	n, err := keyInKernel.Sign(signInfo384, digest[:], signature[:])
 	if err != nil {
@@ -126,7 +132,7 @@ func BenchmarkECDSAP384KernelSign(b *testing.B) {
 		b.Fatalf("failed to generate private key: %v", err)
 	}
 
-	keyInKernel, digest, signature := kernelSetup384(priv)
+	keyInKernel, digest, signature := kernelSetup384(b, priv)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -145,7 +151,7 @@ func BenchmarkECDSAP384KernelVerify(b *testing.B) {
 		b.Fatalf("failed to generate private key: %v", err)
 	}
 
-	keyInKernel, digest, signature := kernelSetup384(priv)
+	keyInKernel, digest, signature := kernelSetup384(b, priv)
 
 	n, err := keyInKernel.Sign(signInfo384, digest[:], signature[:])
 	if err != nil {
