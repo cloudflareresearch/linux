@@ -42,6 +42,5 @@ make -j 16
 # run vm
 virtme-run \
   --kimg "WORK/$name/bzImage" \
-  -a ignore_loglevel \
   --rodir=/tmp/roothome=$(pwd)/WORK/virtme-home \
   --pwd
