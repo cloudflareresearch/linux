@@ -611,8 +611,6 @@ bool lookup_user_key_possessed(const struct key *key,
 key_ref_t lookup_user_key(key_serial_t id, unsigned long lflags,
 			  enum key_need_perm need_perm)
 {
-  printk("at the keyctl lookup_user_key entrypoint\n");
-
 	struct keyring_search_context ctx = {
 		.match_data.cmp		= lookup_user_key_possessed,
 		.match_data.lookup_type	= KEYRING_SEARCH_LOOKUP_DIRECT,
@@ -625,13 +623,11 @@ key_ref_t lookup_user_key(key_serial_t id, unsigned long lflags,
 	int ret;
 
 try_again:
-  printk("at the try_again label in lookup_user_key with id=%d\n", id);
 	ctx.cred = get_current_cred();
 	key_ref = ERR_PTR(-ENOKEY);
 
 	switch (id) {
 	case KEY_SPEC_THREAD_KEYRING:
-    printk("in switch branch KEY_SPEC_THREAD_KEYRING\n");
 		if (!ctx.cred->thread_keyring) {
 			if (!(lflags & KEY_LOOKUP_CREATE))
 				goto error;
@@ -650,7 +646,6 @@ try_again:
 		break;
 
 	case KEY_SPEC_PROCESS_KEYRING:
-    printk("in switch branch KEY_SPEC_PROCESS_KEYRING\n");
 		if (!ctx.cred->process_keyring) {
 			if (!(lflags & KEY_LOOKUP_CREATE))
 				goto error;
@@ -669,7 +664,6 @@ try_again:
 		break;
 
 	case KEY_SPEC_SESSION_KEYRING:
-    printk("in switch branch KEY_SPEC_SESSION_KEYRING\n");
 		if (!ctx.cred->session_keyring) {
 			/* always install a session keyring upon access if one
 			 * doesn't exist yet */
@@ -700,7 +694,6 @@ try_again:
 		break;
 
 	case KEY_SPEC_USER_KEYRING:
-    printk("in switch branch KEY_SPEC_USER_KEYRING\n");
 		ret = look_up_user_keyrings(&key, NULL);
 		if (ret < 0)
 			goto error;
@@ -708,7 +701,6 @@ try_again:
 		break;
 
 	case KEY_SPEC_USER_SESSION_KEYRING:
-    printk("in switch branch KEY_SPEC_USER_SESSION_KEYRING\n");
 		ret = look_up_user_keyrings(NULL, &key);
 		if (ret < 0)
 			goto error;
@@ -716,13 +708,11 @@ try_again:
 		break;
 
 	case KEY_SPEC_GROUP_KEYRING:
-    printk("in switch branch KEY_SPEC_GROUP_KEYRING\n");
 		/* group keyrings are not yet supported */
 		key_ref = ERR_PTR(-EINVAL);
 		goto error;
 
 	case KEY_SPEC_REQKEY_AUTH_KEY:
-    printk("in switch branch KEY_SPEC_REQKEY_AUTH_KEYRING\n");
 		key = ctx.cred->request_key_auth;
 		if (!key)
 			goto error;
@@ -732,7 +722,6 @@ try_again:
 		break;
 
 	case KEY_SPEC_REQUESTOR_KEYRING:
-    printk("in switch branch KEY_SPEC_REQUESTOR_KEYRING\n");
 		if (!ctx.cred->request_key_auth)
 			goto error;
 
@@ -753,15 +742,12 @@ try_again:
 		break;
 
 	default:
-    printk("in default switch branch, setting key_ref to EINVAL\n");
 		key_ref = ERR_PTR(-EINVAL);
 		if (id < 1)
 			goto error;
 
-    printk("calling key_lookup\n");
 		key = key_lookup(id);
 		if (IS_ERR(key)) {
-      printk("key_lookup failed with code %li\n", PTR_ERR(key));
 			key_ref = ERR_CAST(key);
 			goto error;
 		}
@@ -785,14 +771,10 @@ try_again:
 		break;
 	}
 
-  kdebug("left switch happy");
-
 	/* unlink does not use the nominated key in any way, so can skip all
 	 * the permission checks as it is only concerned with the keyring */
 	if (need_perm != KEY_NEED_UNLINK) {
-    printk("need_perm != KEY_NEED_UNLINK\n");
 		if (!(lflags & KEY_LOOKUP_PARTIAL)) {
-      printk("!(lflags & KEY_LOOKUP_PARTIAL)\n");
 			ret = wait_for_key_construction(key, true);
 			switch (ret) {
 			case -ERESTARTSYS:
@@ -806,7 +788,6 @@ try_again:
 				break;
 			}
 		} else if (need_perm != KEY_DEFER_PERM_CHECK) {
-      printk("lflags & KEY_LOOKUP_PARTIAL\n");
 			ret = key_validate(key);
 			if (ret < 0)
 				goto invalid_key;
@@ -814,28 +795,22 @@ try_again:
 
 		ret = -EIO;
 		if (!(lflags & KEY_LOOKUP_PARTIAL) &&
-		    key_read_state(key) == KEY_IS_UNINSTANTIATED) {
-      printk("not partial lookup and key uninstantiated. goto invalid_key\n");
+		    key_read_state(key) == KEY_IS_UNINSTANTIATED)
 			goto invalid_key;
-    }
 	}
 
-  printk("after need unlink branch\n");
 	/* check the permissions */
 	ret = key_task_permission(key_ref, ctx.cred, need_perm);
-  printk("key taks permissions: %i -- shoult be >= 0\n", ret);
 	if (ret < 0)
 		goto invalid_key;
 
 	key->last_used_at = ktime_get_real_seconds();
 
 error:
-  printk("at label `error`, returning\n");
 	put_cred(ctx.cred);
 	return key_ref;
 
 invalid_key:
-  printk("at label `invalid_key`, going to error\n");
 	key_ref_put(key_ref);
 	key_ref = ERR_PTR(ret);
 	goto error;
@@ -843,7 +818,6 @@ invalid_key:
 	/* if we attempted to install a keyring, then it may have caused new
 	 * creds to be installed */
 reget_creds:
-  printk("at label `reget_creds`, going to try_again\n");
 	put_cred(ctx.cred);
 	goto try_again;
 }

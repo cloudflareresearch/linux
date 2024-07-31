@@ -21,7 +21,6 @@
 #include <linux/security.h>
 #include <linux/uio.h>
 #include <linux/uaccess.h>
-#include <crypto/public_key.h>
 #include <keys/request_key_auth-type.h>
 #include "internal.h"
 
@@ -78,9 +77,6 @@ SYSCALL_DEFINE5(add_key, const char __user *, _type,
 		size_t, plen,
 		key_serial_t, ringid)
 {
-  printk(KERN_EMERG "at the add_key syscall entrypoint");
-
-
 	key_ref_t keyring_ref, key_ref;
 	char type[32], *description;
 	void *payload;
@@ -133,8 +129,6 @@ SYSCALL_DEFINE5(add_key, const char __user *, _type,
 		goto error3;
 	}
 
-  printk("got the user keyring\n");
-
 	/* create or update the requested key and add it to the target
 	 * keyring */
 	key_ref = key_create_or_update(keyring_ref, type, description,
@@ -147,45 +141,6 @@ SYSCALL_DEFINE5(add_key, const char __user *, _type,
 	else {
 		ret = PTR_ERR(key_ref);
 	}
-
-  /* <debug> */
-  struct public_key_signature;
-  struct asymmetric_key_subtype {
-    struct module		*owner;
-    const char		*name;
-    unsigned short		name_len;	/* length of name */
-
-    /* Describe a key of this subtype for /proc/keys */
-    void (*describe)(const struct key *key, struct seq_file *m);
-
-    /* Destroy a key of this subtype */
-    void (*destroy)(void *payload_crypto, void *payload_auth);
-
-    int (*query)(const struct kernel_pkey_params *params,
-          struct kernel_pkey_query *info);
-
-    /* Encrypt/decrypt/sign data */
-    int (*eds_op)(struct kernel_pkey_params *params,
-            const void *in, void *out);
-
-    /* Verify the signature on a key of this subtype (optional) */
-    int (*verify_signature)(const struct key *key,
-          const struct public_key_signature *sig);
-  };
-
-  struct key *key;
-  struct public_key *public_key;
-  struct asymmetric_key_subtype *asym_subtype;
-  key = key_ref_to_ptr(key_ref);
-  printk("  key.type.name: %s\n", key->type->name);
-  public_key   = key->payload.data[0];
-  asym_subtype = key->payload.data[1];
-  printk("  (key as asym).name: %s\n", asym_subtype->name); /*1 is asym_subtype*/
-  printk("  (key as asym as public_key) is private? %d\n", public_key->key_is_private);
-  printk("  (key as asym as public_key).algo_oid %d\n", public_key->algo);
-  printk("  (key as asym as public_key).keylen %u\n", public_key->keylen);
-
-  /* </debug> */
 
 	key_ref_put(keyring_ref);
  error3:
@@ -1919,7 +1874,6 @@ long keyctl_capabilities(unsigned char __user *_buffer, size_t buflen)
 SYSCALL_DEFINE5(keyctl, int, option, unsigned long, arg2, unsigned long, arg3,
 		unsigned long, arg4, unsigned long, arg5)
 {
-  printk(KERN_EMERG "at the keyctl syscall 64 entrypoint");
 	switch (option) {
 	case KEYCTL_GET_KEYRING_ID:
 		return keyctl_get_keyring_ID((key_serial_t) arg2,
@@ -2040,8 +1994,6 @@ SYSCALL_DEFINE5(keyctl, int, option, unsigned long, arg2, unsigned long, arg3,
 	case KEYCTL_PKEY_ENCRYPT:
 	case KEYCTL_PKEY_DECRYPT:
 	case KEYCTL_PKEY_SIGN:
-    printk(KERN_EMERG "calling keyctl_pkey_e_d_s...");
-
 		return keyctl_pkey_e_d_s(
 			option,
 			(const struct keyctl_pkey_params __user *)arg2,

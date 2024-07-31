@@ -17,7 +17,6 @@
 COMPAT_SYSCALL_DEFINE5(keyctl, u32, option,
 		       u32, arg2, u32, arg3, u32, arg4, u32, arg5)
 {
-  printk(KERN_EMERG "at the keyctl syscall 32 entrypoint");
 	switch (option) {
 	case KEYCTL_GET_KEYRING_ID:
 		return keyctl_get_keyring_ID(arg2, arg3);

@@ -32,14 +32,12 @@ int key_task_permission(const key_ref_t key_ref, const struct cred *cred,
 
 	switch (need_perm) {
 	default:
-    printk("returning access denied at the very start\n");
 		WARN_ON(1);
 		return -EACCES;
 	case KEY_NEED_UNLINK:
 	case KEY_SYSADMIN_OVERRIDE:
 	case KEY_AUTHTOKEN_OVERRIDE:
 	case KEY_DEFER_PERM_CHECK:
-    printk("goto lsm\n");
 		goto lsm;
 
 	case KEY_NEED_VIEW:	mask = KEY_OTH_VIEW;	break;
@@ -50,13 +48,10 @@ int key_task_permission(const key_ref_t key_ref, const struct cred *cred,
 	case KEY_NEED_SETATTR:	mask = KEY_OTH_SETATTR;	break;
 	}
 
-  printk("left switch\n");
-
 	key = key_ref_to_ptr(key_ref);
 
 	/* use the second 8-bits of permissions for keys the caller owns */
 	if (uid_eq(key->uid, cred->fsuid)) {
-    printk("goto use these perms 1\n");
 		kperm = key->perm >> 16;
 		goto use_these_perms;
 	}
@@ -65,14 +60,12 @@ int key_task_permission(const key_ref_t key_ref, const struct cred *cred,
 	 * membership in common with */
 	if (gid_valid(key->gid) && key->perm & KEY_GRP_ALL) {
 		if (gid_eq(key->gid, cred->fsgid)) {
-    printk("goto use these perms 2\n");
 			kperm = key->perm >> 8;
 			goto use_these_perms;
 		}
 
 		ret = groups_search(cred->group_info, key->gid);
 		if (ret) {
-      printk("goto use these perms 3\n");
 			kperm = key->perm >> 8;
 			goto use_these_perms;
 		}
@@ -89,9 +82,6 @@ use_these_perms:
 	if (is_key_possessed(key_ref))
 		kperm |= key->perm >> 24;
 
-  printk("kperm %x\n", kperm);
-  printk(" mask %x\n", mask);
-  printk("  and %x\n", kperm & mask);
 	if ((kperm & mask) != mask)
 		return -EACCES;
 

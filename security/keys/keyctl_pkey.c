@@ -79,7 +79,6 @@ static int keyctl_pkey_params_get(key_serial_t id,
 				  const char __user *_info,
 				  struct kernel_pkey_params *params)
 {
-  printk("in keyctl_pkey_params_get\n");
 	key_ref_t key_ref;
 	void *p;
 	int ret;
@@ -87,18 +86,15 @@ static int keyctl_pkey_params_get(key_serial_t id,
 	memset(params, 0, sizeof(*params));
 	params->encoding = "raw";
 
-  printk("calling strndup_user\n");
 	p = strndup_user(_info, PAGE_SIZE);
 	if (IS_ERR(p))
 		return PTR_ERR(p);
 	params->info = p;
 
-  printk("calling keyctl_pkey_params_parse\n");
 	ret = keyctl_pkey_params_parse(params);
 	if (ret < 0)
 		return ret;
 
-  printk("calling lookup_user_key\n");
 	key_ref = lookup_user_key(id, 0, KEY_NEED_SEARCH);
 	if (IS_ERR(key_ref))
 		return PTR_ERR(key_ref);
@@ -119,8 +115,6 @@ static int keyctl_pkey_params_get_2(const struct keyctl_pkey_params __user *_par
 				    int op,
 				    struct kernel_pkey_params *params)
 {
-  printk("in keyctl_pkey_params_get_2\n");
-
 	struct keyctl_pkey_params uparams;
 	struct kernel_pkey_query info;
 	int ret;
@@ -128,30 +122,16 @@ static int keyctl_pkey_params_get_2(const struct keyctl_pkey_params __user *_par
 	memset(params, 0, sizeof(*params));
 	params->encoding = "raw";
 
-  printk("calling copy_from_user... \n");
 	if (copy_from_user(&uparams, _params, sizeof(uparams)) != 0)
 		return -EFAULT;
 
-  printk("calling keyctl_pkey_params_get... \n");
 	ret = keyctl_pkey_params_get(uparams.key_id, _info, params);
 	if (ret < 0)
 		return ret;
 
-  printk("  got params:");
-  printk("    encoding: %s", params->encoding);
-  printk("    hash_algo: %s", params->hash_algo);
-  printk("    info: %s", params->info);
-  printk("    in_len: %i", params->in_len);
-  printk("    key.type.name: %s", params->key->type->name);
-
-  printk("calling asym_query... \n");
 	ret = params->key->type->asym_query(params, &info);
 	if (ret < 0)
 		return ret;
-
-  printk("op is %i \n", op);
-  printk("in  len check: %i > %i \n", uparams.in_len, info.max_data_size);
-  printk("out len check: %i > %i \n", uparams.out_len, info.max_sig_size);
 
 	switch (op) {
 	case KEYCTL_PKEY_ENCRYPT:
@@ -235,7 +215,6 @@ long keyctl_pkey_e_d_s(int op,
 		       const void __user *_in,
 		       void __user *_out)
 {
-  printk(KERN_EMERG "at the keyctl_pkey_e_d_s entrypoint");
 	struct kernel_pkey_params params;
 	void *in, *out;
 	long ret;
@@ -272,8 +251,6 @@ long keyctl_pkey_e_d_s(int op,
 	out = kmalloc(params.out_len, GFP_KERNEL);
 	if (!out)
 		goto error_in;
-
-  printk(KERN_WARNING "trying to sign");
 
 	ret = params.key->type->asym_eds_op(&params, in, out);
 	if (ret < 0)
