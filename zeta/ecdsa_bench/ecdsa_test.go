@@ -6,10 +6,12 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/sha512"
 	"runtime"
 	"testing"
 )
-var signInfo384    = []byte("enc=x962 hash=sha384\x00")
+
+var signInfo384 = []byte("enc=x962 hash=sha384\x00")
 
 func kernelSetup256(priv *ecdsa.PrivateKey) (KeySerial, []byte, []byte) {
 	var (
@@ -33,6 +35,33 @@ func kernelSetup384(priv *ecdsa.PrivateKey) (KeySerial, []byte, []byte) {
 	keyInKernel := loadKeyToKernel(priv)
 
 	return keyInKernel, digest[:], signature[:]
+}
+
+func TestSign384InKernelVerifyInGo(t *testing.T) {
+	runtime.LockOSThread()
+
+	var (
+		msg       = []byte("hello world")
+		digest    = sha512.Sum384(msg)
+		signature [256]byte
+	)
+
+	priv, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
+	if err != nil {
+		t.Fatalf("failed to generate private key: %v", err)
+	}
+
+	keyInKernel := loadKeyToKernel(priv)
+
+	n, err := keyInKernel.Sign(signInfo384, digest[:], signature[:])
+	if err != nil {
+		t.Fatalf("failed to sign the digest: %v", err)
+	}
+
+	ok := ecdsa.VerifyASN1(&priv.PublicKey, digest[:], signature[:n])
+	if !ok {
+		t.Fatalf("failed to verify the signature")
+	}
 }
 
 func TestSignInKernelVerifyInGo(t *testing.T) {
@@ -125,7 +154,7 @@ func BenchmarkECDSAP384KernelVerify(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		err := keyInKernel.Verify(signInfo, digest[:], signature[:n])
+		err := keyInKernel.Verify(signInfo384, digest[:], signature[:n])
 		if err != nil {
 			b.Fatalf("failed to verify the signature: %v", err)
 		}
