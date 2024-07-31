@@ -6,6 +6,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/sha256"
+	"runtime"
 	"testing"
 )
 
@@ -22,6 +23,8 @@ func kernelSetup(priv *ecdsa.PrivateKey) (KeySerial, []byte, []byte) {
 }
 
 func TestSignInKernelVerifyInGo(t *testing.T) {
+	runtime.LockOSThread()
+
 	var (
 		msg       = []byte("hello world")
 		digest    = sha256.Sum256(msg)
@@ -47,6 +50,8 @@ func TestSignInKernelVerifyInGo(t *testing.T) {
 }
 
 func TestSignAndVerifyInKernel(t *testing.T) {
+	runtime.LockOSThread()
+
 	var (
 		msg       = []byte("hello world")
 		digest    = sha256.Sum256(msg)
@@ -72,6 +77,8 @@ func TestSignAndVerifyInKernel(t *testing.T) {
 }
 
 func BenchmarkECDSAKernelSign(b *testing.B) {
+	runtime.LockOSThread()
+
 	priv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		b.Fatalf("failed to generate private key: %v", err)
@@ -89,6 +96,8 @@ func BenchmarkECDSAKernelSign(b *testing.B) {
 }
 
 func BenchmarkECDSAKernelVerify(b *testing.B) {
+	runtime.LockOSThread()
+
 	priv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		b.Fatalf("failed to generate private key: %v", err)

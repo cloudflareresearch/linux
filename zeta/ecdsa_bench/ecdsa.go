@@ -114,7 +114,7 @@ func loadKeyToKernel(key crypto.PrivateKey) KeySerial {
 }
 
 func main() {
-	runtime.GOMAXPROCS(1)
+	runtime.LockOSThread()
 
 	var (
 		msg       = []byte("hello world")
