@@ -20,7 +20,7 @@
 #include "ecdsasignature.asn1.h"
 
 #include "hacl_p256.h"
-#include "Hacl_P384.h"
+#include "hacl_p384.h"
 
 struct ecc_ctx {
 	unsigned int curve_id;
@@ -45,7 +45,8 @@ struct ecdsa_signature_ctx {
  * Get the r and s components of a signature from the X509 certificate.
  */
 static int ecdsa_get_signature_rs(u64 *dest, size_t hdrlen, unsigned char tag,
-				  const void *value, size_t vlen, unsigned int ndigits)
+				  const void *value, size_t vlen,
+				  unsigned int ndigits)
 {
 	size_t keylen = ndigits * sizeof(u64);
 	ssize_t diff = vlen - keylen;
@@ -103,7 +104,8 @@ int ecdsa_get_signature_s(void *context, size_t hdrlen, unsigned char tag,
 				      sig->curve->g.ndigits);
 }
 
-static int _ecdsa_verify(struct ecc_ctx *ctx, const u64 *hash, const u64 *r, const u64 *s)
+static int _ecdsa_verify(struct ecc_ctx *ctx, const u64 *hash, const u64 *r,
+			 const u64 *s)
 {
 	const struct ecc_curve *curve = ctx->curve;
 	unsigned int ndigits = curve->g.ndigits;
@@ -120,8 +122,8 @@ static int _ecdsa_verify(struct ecc_ctx *ctx, const u64 *hash, const u64 *r, con
 		return -EBADMSG;
 
 	/* hash is given */
-	pr_devel("hash : %016llx %016llx ... %016llx\n",
-		 hash[ndigits - 1], hash[ndigits - 2], hash[0]);
+	pr_devel("hash : %016llx %016llx ... %016llx\n", hash[ndigits - 1],
+		 hash[ndigits - 2], hash[0]);
 
 	/* s1 = (s^-1) mod n */
 	vli_mod_inv(s1, s, curve->n, ndigits);
@@ -168,11 +170,12 @@ static int ecdsa_verify(struct akcipher_request *req)
 		return -ENOMEM;
 
 	sg_pcopy_to_buffer(req->src,
-		sg_nents_for_len(req->src, req->src_len + req->dst_len),
-		buffer, req->src_len + req->dst_len, 0);
+			   sg_nents_for_len(req->src,
+					    req->src_len + req->dst_len),
+			   buffer, req->src_len + req->dst_len, 0);
 
-	ret = asn1_ber_decoder(&ecdsasignature_decoder, &sig_ctx,
-			       buffer, req->src_len);
+	ret = asn1_ber_decoder(&ecdsasignature_decoder, &sig_ctx, buffer,
+			       req->src_len);
 	if (ret < 0)
 		goto error;
 
@@ -191,11 +194,12 @@ static int ecdsa_verify(struct akcipher_request *req)
 		u8 pk[64];
 		u8 r[32];
 		u8 s[32];
-		ecc_swap_digits(ctx->x, (u64*)pk, 4);
-		ecc_swap_digits(ctx->y, (u64*)(pk + 32), 4);
-		ecc_swap_digits(sig_ctx.r, (u64*)r, ctx->curve->g.ndigits);
-		ecc_swap_digits(sig_ctx.s, (u64*)s, ctx->curve->g.ndigits);
-		if (Hacl_P256_ecdsa_verif_without_hash(req->dst_len, rawhash, pk, r, s)) {
+		ecc_swap_digits(ctx->x, (u64 *)pk, 4);
+		ecc_swap_digits(ctx->y, (u64 *)(pk + 32), 4);
+		ecc_swap_digits(sig_ctx.r, (u64 *)r, ctx->curve->g.ndigits);
+		ecc_swap_digits(sig_ctx.s, (u64 *)s, ctx->curve->g.ndigits);
+		if (Hacl_P256_ecdsa_verif_without_hash(req->dst_len, rawhash,
+						       pk, r, s)) {
 			ret = 0;
 		} else {
 			ret = -EKEYREJECTED;
@@ -256,7 +260,7 @@ static struct crypto_rng *rfc6979_alloc_rng(struct ecc_ctx *ctx,
 {
 	u64 seed[2 * ECC_MAX_DIGITS];
 	unsigned int ndigits = ctx->curve->g.ndigits;
-	struct drbg_string entropy, pers = {0};
+	struct drbg_string entropy, pers = { 0 };
 	struct drbg_test_data seed_data;
 	const char *alg;
 	struct crypto_rng *rng;
@@ -282,7 +286,8 @@ static struct crypto_rng *rfc6979_alloc_rng(struct ecc_ctx *ctx,
 
 	ecc_swap_digits(ctx->d, seed, ndigits);
 	memcpy(seed + ndigits, rawhash, ndigits << ECC_DIGITS_TO_BYTES_SHIFT);
-	drbg_string_fill(&entropy, (u8 *)seed, (ndigits * 2) << ECC_DIGITS_TO_BYTES_SHIFT);
+	drbg_string_fill(&entropy, (u8 *)seed,
+			 (ndigits * 2) << ECC_DIGITS_TO_BYTES_SHIFT);
 	seed_data.testentropy = &entropy;
 	err = crypto_drbg_reset_test(rng, &pers, &seed_data);
 	if (err) {
@@ -300,7 +305,8 @@ static int rfc6979_gen_k(struct ecc_ctx *ctx, struct crypto_rng *rng, u64 *k)
 	int ret;
 
 	do {
-		ret = crypto_rng_get_bytes(rng, K, ndigits << ECC_DIGITS_TO_BYTES_SHIFT);
+		ret = crypto_rng_get_bytes(
+			rng, K, ndigits << ECC_DIGITS_TO_BYTES_SHIFT);
 		if (ret)
 			return ret;
 
@@ -311,13 +317,15 @@ static int rfc6979_gen_k(struct ecc_ctx *ctx, struct crypto_rng *rng, u64 *k)
 	return 0;
 }
 
-static int rfc6979_gen_k_hacl(struct ecc_ctx *ctx, struct crypto_rng *rng, u8 *k)
+static int rfc6979_gen_k_hacl(struct ecc_ctx *ctx, struct crypto_rng *rng,
+			      u8 *k)
 {
 	unsigned int ndigits = ctx->curve->g.ndigits;
 	int ret;
 
 	do {
-		ret = crypto_rng_get_bytes(rng, k, ndigits << ECC_DIGITS_TO_BYTES_SHIFT);
+		ret = crypto_rng_get_bytes(
+			rng, k, ndigits << ECC_DIGITS_TO_BYTES_SHIFT);
 		if (ret)
 			return ret;
 
@@ -362,7 +370,8 @@ static int asn1_encode_signature_sg(struct akcipher_request *req,
 
 	nents = sg_nents_for_len(req->dst, needed);
 	if (nents == 1) {
-		sg_miter_start(&miter, req->dst, nents, SG_MITER_ATOMIC | SG_MITER_TO_SG);
+		sg_miter_start(&miter, req->dst, nents,
+			       SG_MITER_ATOMIC | SG_MITER_TO_SG);
 		sg_miter_next(&miter);
 		buf = miter.addr;
 	} else {
@@ -374,8 +383,9 @@ static int asn1_encode_signature_sg(struct akcipher_request *req,
 	/* we will begin from the end */
 	ecc_swap_digits(sig_ctx->s, (u64 *)scratch, ndigits);
 	p = buf + needed - BITS_TO_BYTES(s_bits);
-	memcpy(p, scratch +
-	       (ndigits << ECC_DIGITS_TO_BYTES_SHIFT) - BITS_TO_BYTES(s_bits),
+	memcpy(p,
+	       scratch + (ndigits << ECC_DIGITS_TO_BYTES_SHIFT) -
+		       BITS_TO_BYTES(s_bits),
 	       BITS_TO_BYTES(s_bits));
 	if (s_bits % 8 == 0) {
 		p--;
@@ -383,12 +393,14 @@ static int asn1_encode_signature_sg(struct akcipher_request *req,
 	}
 	p -= 2;
 	p[0] = ASN1_INT;
-	p[1] = (s_bits % 8 == 0) ? BITS_TO_BYTES(s_bits) + 1 : BITS_TO_BYTES(s_bits);
+	p[1] = (s_bits % 8 == 0) ? BITS_TO_BYTES(s_bits) + 1 :
+				   BITS_TO_BYTES(s_bits);
 
 	ecc_swap_digits(sig_ctx->r, (u64 *)scratch, ndigits);
 	p -= BITS_TO_BYTES(r_bits);
-	memcpy(p, scratch +
-	       (ndigits << ECC_DIGITS_TO_BYTES_SHIFT) - BITS_TO_BYTES(r_bits),
+	memcpy(p,
+	       scratch + (ndigits << ECC_DIGITS_TO_BYTES_SHIFT) -
+		       BITS_TO_BYTES(r_bits),
 	       BITS_TO_BYTES(r_bits));
 	if (r_bits % 8 == 0) {
 		p--;
@@ -396,7 +408,8 @@ static int asn1_encode_signature_sg(struct akcipher_request *req,
 	}
 	p -= 2;
 	p[0] = ASN1_INT;
-	p[1] = (r_bits % 8 == 0) ? BITS_TO_BYTES(r_bits) + 1 : BITS_TO_BYTES(r_bits);
+	p[1] = (r_bits % 8 == 0) ? BITS_TO_BYTES(r_bits) + 1 :
+				   BITS_TO_BYTES(r_bits);
 
 	buf[0] = ASN1_CONS_BIT | ASN1_SEQ;
 	buf[1] = (needed - 2) & 0xff;
@@ -431,11 +444,13 @@ static int ecdsa_sign(struct akcipher_request *req)
 	if (diff >= 0) {
 		if (diff)
 			memset(rawhash_k, 0, diff);
-		sg_copy_to_buffer(req->src, sg_nents_for_len(req->src, req->src_len),
+		sg_copy_to_buffer(req->src,
+				  sg_nents_for_len(req->src, req->src_len),
 				  &rawhash_k[diff], req->src_len);
 	} else if (diff < 0) {
 		/* given hash is longer, we take the left-most bytes */
-		sg_copy_to_buffer(req->src, sg_nents_for_len(req->src, req->src_len),
+		sg_copy_to_buffer(req->src,
+				  sg_nents_for_len(req->src, req->src_len),
 				  rawhash_k, req->src_len);
 	}
 
@@ -455,8 +470,9 @@ static int ecdsa_sign(struct akcipher_request *req)
 		/* The signing function also checks that the scalars are valid. */
 		/* XXX: Is the value blinded already or should this be done here? */
 		do {
-			if (Hacl_P256_ecdsa_sign_p256_without_hash(signature, req->dst_len,
-													   rawhash_k, private_key, nonce)) {
+			if (Hacl_P256_ecdsa_sign_p256_without_hash(
+				    signature, req->dst_len, rawhash_k,
+				    private_key, nonce)) {
 				ret = 0;
 			} else {
 				ret = -EAGAIN;
@@ -467,7 +483,7 @@ static int ecdsa_sign(struct akcipher_request *req)
 		ecc_swap_digits(signature, sig_ctx.r, 4);
 		ecc_swap_digits(signature + 32, sig_ctx.s, 4);
 		ret = asn1_encode_signature_sg(req, &sig_ctx, rawhash_k);
-	} else if strncmp (ctx->curve->name, "nist_384", 8) {
+	} else if (strncmp(ctx->curve->name, "nist_384", 8)) {
 		u8 private_key[48];
 		u8 signature[96];
 		u8 nonce[32];
@@ -499,7 +515,8 @@ static int ecdsa_sign(struct akcipher_request *req)
 			if (ret)
 				goto alloc_rng;
 
-			ret = _ecdsa_sign(ctx, hash, (u64 *)rawhash_k, &sig_ctx);
+			ret = _ecdsa_sign(ctx, hash, (u64 *)rawhash_k,
+					  &sig_ctx);
 		} while (ret == -EAGAIN);
 		memzero_explicit(rawhash_k, sizeof(rawhash_k));
 
@@ -521,7 +538,6 @@ static int ecdsa_ecc_ctx_init(struct ecc_ctx *ctx, unsigned int curve_id)
 	return 0;
 }
 
-
 static void ecdsa_ecc_ctx_deinit(struct ecc_ctx *ctx)
 {
 	ctx->key_set = false;
@@ -537,8 +553,8 @@ static int ecdsa_ecc_ctx_reset(struct ecc_ctx *ctx)
 	ecdsa_ecc_ctx_deinit(ctx);
 	ret = ecdsa_ecc_ctx_init(ctx, curve_id);
 	if (ret == 0)
-		ctx->pub_key = ECC_POINT_INIT(ctx->x, ctx->y,
-					      ctx->curve->g.ndigits);
+		ctx->pub_key =
+			ECC_POINT_INIT(ctx->x, ctx->y, ctx->curve->g.ndigits);
 	return ret;
 }
 
@@ -547,7 +563,8 @@ static int ecdsa_ecc_ctx_reset(struct ecc_ctx *ctx)
  * certificate. The key data contain the concatenated X and Y coordinates of
  * the public key.
  */
-static int ecdsa_set_pub_key(struct crypto_akcipher *tfm, const void *key, unsigned int keylen)
+static int ecdsa_set_pub_key(struct crypto_akcipher *tfm, const void *key,
+			     unsigned int keylen)
 {
 	struct ecc_ctx *ctx = akcipher_tfm_ctx(tfm);
 	const unsigned char *d = key;
@@ -616,7 +633,8 @@ int ecc_get_priv_key(void *context, size_t hdrlen, unsigned char tag,
 
 	ecc_swap_digits((u64 *)priv, ctx->d, ctx->curve->g.ndigits);
 	memzero_explicit(priv, sizeof(priv));
-	return ecc_is_key_valid(ctx->curve_id, ctx->curve->g.ndigits, ctx->d, dlen);
+	return ecc_is_key_valid(ctx->curve_id, ctx->curve->g.ndigits, ctx->d,
+				dlen);
 }
 
 int ecc_get_priv_params(void *context, size_t hdrlen, unsigned char tag,
@@ -671,9 +689,9 @@ static int ecdsa_set_priv_key(struct crypto_akcipher *tfm, const void *key,
 
 	ctx->key_set = ret == 0;
 	ctx->is_private = true;
- 
- 	return ret;
- }
+
+	return ret;
+}
 
 static void ecdsa_exit_tfm(struct crypto_akcipher *tfm)
 {
@@ -698,7 +716,8 @@ static unsigned int ecdsa_max_size(struct crypto_akcipher *tfm)
 		 * integer length (max 49 for 384 bit curve) + 1 zero byte (if r
 		 * or s has leftmost bit set) + sizeof(r or s)
 		 */
-		return 2 + 2 * (3 + (ctx->curve->g.ndigits << ECC_DIGITS_TO_BYTES_SHIFT));
+		return 2 + 2 * (3 + (ctx->curve->g.ndigits
+				     << ECC_DIGITS_TO_BYTES_SHIFT));
 	}
 
 	return ctx->curve->g.ndigits << ECC_DIGITS_TO_BYTES_SHIFT;

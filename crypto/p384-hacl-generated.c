@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include "Hacl_P384.h"
+#include "hacl_p384.h"
 
 static inline uint64_t bn_is_eq_mask(uint64_t *x, uint64_t *y)
 {
