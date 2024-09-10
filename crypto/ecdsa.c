@@ -20,6 +20,7 @@
 #include "ecdsasignature.asn1.h"
 
 #include "hacl_p256.h"
+#include "Hacl_P384.h"
 
 struct ecc_ctx {
 	unsigned int curve_id;
@@ -465,6 +466,31 @@ static int ecdsa_sign(struct akcipher_request *req)
 		   done directly and not first converting it to u64s. */
 		ecc_swap_digits(signature, sig_ctx.r, 4);
 		ecc_swap_digits(signature + 32, sig_ctx.s, 4);
+		ret = asn1_encode_signature_sg(req, &sig_ctx, rawhash_k);
+	} else if strncmp (ctx->curve->name, "nist_384", 8) {
+		u8 private_key[48];
+		u8 signature[96];
+		u8 nonce[32];
+		ecc_swap_digits(ctx->d, (u64 *)private_key, 6);
+		ret = rfc6979_gen_k_hacl(ctx, rng, nonce);
+		if (ret) {
+			goto alloc_rng;
+		}
+		/* The signing function also checks that the scalars are valid. */
+		/* XXX: Is the value blinded already or should this be done here? */
+		do {
+			if (Hacl_P384_ecdsa_sign_p384_without_hash(
+				    signature, req->dst_len, rawhash_k,
+				    private_key, nonce)) {
+				ret = 0;
+			} else {
+				ret = -EAGAIN;
+			}
+		} while (ret == -EAGAIN);
+		/* Encode the signature. Note that this could be more efficient when
+		   done directly and not first converting it to u64s. */
+		ecc_swap_digits(signature, sig_ctx.r, 6);
+		ecc_swap_digits(signature + 48, sig_ctx.s, 6);
 		ret = asn1_encode_signature_sg(req, &sig_ctx, rawhash_k);
 	} else {
 		ecc_swap_digits((u64 *)rawhash_k, hash, ctx->curve->g.ndigits);
