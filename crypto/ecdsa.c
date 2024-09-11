@@ -458,6 +458,9 @@ static int ecdsa_sign(struct akcipher_request *req)
 	if (IS_ERR(rng))
 		return PTR_ERR(rng);
 
+	printk("in the signing function, before the branch. curve name: %s\n",
+	       ctx->curve->name);
+
 	if (strncmp(ctx->curve->name, "nist_256", 8) == 0) {
 		u8 private_key[32];
 		u8 signature[64];

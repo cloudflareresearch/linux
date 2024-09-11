@@ -7,6 +7,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/x509"
+	"fmt"
 	"log"
 	"runtime"
 	"syscall"
@@ -99,13 +100,18 @@ func (key KeySerial) Verify(info, digest, signature []byte) error {
 	return errno
 }
 
+var counter = 0
+
 func loadKeyToKernel(key crypto.PrivateKey) KeySerial {
 	pkcs8, err := x509.MarshalPKCS8PrivateKey(key)
 	if err != nil {
 		log.Fatalf("failed to serialize the private key to PKCS8 blob: %v", err)
 	}
 
-	serial, err := KEY_SPEC_PROCESS_KEYRING.LoadAsym("test ecdsa key", pkcs8)
+	name := fmt.Sprintf("test ecdsa key %v", counter)
+	counter += 1
+
+	serial, err := KEY_SPEC_PROCESS_KEYRING.LoadAsym(name, pkcs8)
 	if err != nil {
 		log.Fatalf("failed to load the private key into the keyring: %v", err)
 	}
