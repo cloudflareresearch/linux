@@ -115,7 +115,6 @@ static int keyctl_pkey_params_get_2(const struct keyctl_pkey_params __user *_par
 				    int op,
 				    struct kernel_pkey_params *params)
 {
-	printk("entering keyctl_pkey_params_get_2\n");
 	struct keyctl_pkey_params uparams;
 	struct kernel_pkey_query info;
 	int ret;
@@ -127,19 +126,12 @@ static int keyctl_pkey_params_get_2(const struct keyctl_pkey_params __user *_par
 		return -EFAULT;
 
 	ret = keyctl_pkey_params_get(uparams.key_id, _info, params);
-	printk(" params_get() returned %i\n", ret);
 	if (ret < 0)
 		return ret;
 
 	ret = params->key->type->asym_query(params, &info);
-	printk(" asym_query() returned %i\n", ret);
 	if (ret < 0)
 		return ret;
-
-	printk(" uparams.in_len=%i\n", uparams.in_len);
-	printk(" uparams.out_len=%i\n", uparams.out_len);
-	printk(" info.max_data_size=%i\n", info.max_data_size);
-	printk(" info.max_sig_size=%i\n", info.max_sig_size);
 
 	switch (op) {
 	case KEYCTL_PKEY_ENCRYPT:
@@ -167,7 +159,6 @@ static int keyctl_pkey_params_get_2(const struct keyctl_pkey_params __user *_par
 	}
 
 	params->in_len  = uparams.in_len;
-	printk(" success\n");
 	params->out_len = uparams.out_len; /* Note: same as in2_len */
 	return 0;
 }
@@ -228,13 +219,9 @@ long keyctl_pkey_e_d_s(int op,
 	void *in, *out;
 	long ret;
 
-	printk("entering keyctl_pkey_e_d_s\n");
 	ret = keyctl_pkey_params_get_2(_params, _info, op, &params);
 	if (ret < 0)
 		goto error_params;
-
-	printk(" parsed params: info=%s params->out_len=%d \n", params.info,
-	       params.out_len);
 
 	ret = -EOPNOTSUPP;
 	if (!params.key->type->asym_eds_op)

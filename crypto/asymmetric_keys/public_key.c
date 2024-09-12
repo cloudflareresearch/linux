@@ -274,7 +274,6 @@ error_free_key:
 static int software_key_eds_op(struct kernel_pkey_params *params,
 			       const void *in, void *out)
 {
-	printk("entering software_key_eds_op\n");
 	const struct public_key *pkey = params->key->payload.data[asym_crypto];
 	char alg_name[CRYPTO_MAX_ALG_NAME];
 	struct crypto_akcipher *tfm;
@@ -289,7 +288,6 @@ static int software_key_eds_op(struct kernel_pkey_params *params,
 	ret = software_key_determine_akcipher(pkey, params->encoding,
 					      params->hash_algo, alg_name,
 					      &issig, params->op);
-	printk(" software_key_determine_akcipher returned %i\n", ret);
 	if (ret < 0)
 		return ret;
 
@@ -304,7 +302,6 @@ static int software_key_eds_op(struct kernel_pkey_params *params,
 	ptr = pkey_pack_u32(ptr, pkey->paramlen);
 	memcpy(ptr, pkey->params, pkey->paramlen);
 
-	printk(" issig: %i\n", issig);
 	if (issig) {
 		sig = crypto_alloc_sig(alg_name, 0, 0);
 		if (IS_ERR(sig)) {
@@ -314,16 +311,13 @@ static int software_key_eds_op(struct kernel_pkey_params *params,
 
 		if (pkey->key_is_private) {
 			ret = crypto_sig_set_privkey(sig, key, pkey->keylen);
-			printk(" crypto_sig_set_privkey returned %i\n", ret);
 		} else {
 			ret = crypto_sig_set_pubkey(sig, key, pkey->keylen);
-			printk(" crypto_sig_set_pubkey returned %i\n", ret);
 		}
 		if (ret)
 			goto error_free_tfm;
 
 		ksz = crypto_sig_maxsize(sig);
-		printk(" crypto_sig_maxsize returned %i\n", ksz);
 	} else {
 		tfm = crypto_alloc_akcipher(alg_name, 0, 0);
 		if (IS_ERR(tfm)) {
@@ -334,17 +328,14 @@ static int software_key_eds_op(struct kernel_pkey_params *params,
 		if (pkey->key_is_private) {
 			ret = crypto_akcipher_set_priv_key(tfm, key,
 							   pkey->keylen);
-			printk(" crypto_sig_set_privkey returned %i\n", ret);
 		} else {
 			ret = crypto_akcipher_set_pub_key(tfm, key,
 							  pkey->keylen);
-			printk(" crypto_sig_set_pubkey returned %i\n", ret);
 		}
 		if (ret)
 			goto error_free_tfm;
 
 		ksz = crypto_akcipher_maxsize(tfm);
-		printk(" crypto_sig_maxsize returned %i\n", ksz);
 	}
 
 	ret = -EINVAL;
@@ -368,7 +359,6 @@ static int software_key_eds_op(struct kernel_pkey_params *params,
 			break;
 		ret = crypto_sig_sign(sig, in, params->in_len,
 				      out, params->out_len);
-		printk(" crypto_sig_sign returned %i\n", ret);
 		break;
 	default:
 		BUG();
