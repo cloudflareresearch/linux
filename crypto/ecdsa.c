@@ -145,10 +145,11 @@ static int _ecdsa_verify(struct ecc_ctx *ctx, const u64 *hash, const u64 *r,
 	return -EKEYREJECTED;
 }
 
+#ifdef CONFIG_CRYPTO_ECDSA_HACL
 /*
  * Verify an ECDSA signature.
  */
-static int ecdsa_verify(struct akcipher_request *req)
+static int ecdsa_verify_hacl(struct akcipher_request *req)
 {
 	struct crypto_akcipher *tfm = crypto_akcipher_reqtfm(req);
 	struct ecc_ctx *ctx = akcipher_tfm_ctx(tfm);
@@ -204,10 +205,78 @@ static int ecdsa_verify(struct akcipher_request *req)
 		} else {
 			ret = -EKEYREJECTED;
 		}
+	} else if (strncmp(ctx->curve->name, "nist_384", 8) == 0) {
+		u8 pk[96];
+		u8 r[48];
+		u8 s[48];
+		ecc_swap_digits(ctx->x, (u64 *)pk, 6);
+		ecc_swap_digits(ctx->y, (u64 *)(pk + 48), 6);
+		ecc_swap_digits(sig_ctx.r, (u64 *)r, ctx->curve->g.ndigits);
+		ecc_swap_digits(sig_ctx.s, (u64 *)s, ctx->curve->g.ndigits);
+		if (Hacl_P384_ecdsa_verif_without_hash(req->dst_len, rawhash,
+						       pk, r, s)) {
+			ret = 0;
+		} else {
+			ret = -EKEYREJECTED;
+		}
 	} else {
 		ecc_swap_digits((u64 *)rawhash, hash, ctx->curve->g.ndigits);
 		ret = _ecdsa_verify(ctx, hash, sig_ctx.r, sig_ctx.s);
 	}
+
+error:
+	kfree(buffer);
+
+	return ret;
+}
+#endif /* ifdef CONFIG_CRYPTO_ECDSA_HACL */
+/*
+ * Verify an ECDSA signature.
+ */
+static int ecdsa_verify(struct akcipher_request *req)
+{
+	struct crypto_akcipher *tfm = crypto_akcipher_reqtfm(req);
+	struct ecc_ctx *ctx = akcipher_tfm_ctx(tfm);
+	size_t keylen = ctx->curve->g.ndigits * sizeof(u64);
+	struct ecdsa_signature_ctx sig_ctx = {
+		.curve = ctx->curve,
+	};
+	u8 rawhash[ECC_MAX_BYTES];
+	u64 hash[ECC_MAX_DIGITS];
+	unsigned char *buffer;
+	ssize_t diff;
+	int ret;
+
+	if (unlikely(!ctx->key_set))
+		return -EINVAL;
+
+	buffer = kmalloc(req->src_len + req->dst_len, GFP_KERNEL);
+	if (!buffer)
+		return -ENOMEM;
+
+	sg_pcopy_to_buffer(req->src,
+			   sg_nents_for_len(req->src,
+					    req->src_len + req->dst_len),
+			   buffer, req->src_len + req->dst_len, 0);
+
+	ret = asn1_ber_decoder(&ecdsasignature_decoder, &sig_ctx, buffer,
+			       req->src_len);
+	if (ret < 0)
+		goto error;
+
+	/* if the hash is shorter then we will add leading zeros to fit to ndigits */
+	diff = keylen - req->dst_len;
+	if (diff >= 0) {
+		if (diff)
+			memset(rawhash, 0, diff);
+		memcpy(&rawhash[diff], buffer + req->src_len, req->dst_len);
+	} else if (diff < 0) {
+		/* given hash is longer, we take the left-most bytes */
+		memcpy(&rawhash, buffer + req->src_len, keylen);
+	}
+
+	ecc_swap_digits((u64 *)rawhash, hash, ctx->curve->g.ndigits);
+	ret = _ecdsa_verify(ctx, hash, sig_ctx.r, sig_ctx.s);
 
 error:
 	kfree(buffer);
@@ -317,6 +386,7 @@ static int rfc6979_gen_k(struct ecc_ctx *ctx, struct crypto_rng *rng, u64 *k)
 	return 0;
 }
 
+#ifdef CONFIG_CRYPTO_ECDSA_HACL
 static int rfc6979_gen_k_hacl(struct ecc_ctx *ctx, struct crypto_rng *rng,
 			      u8 *k)
 {
@@ -333,6 +403,7 @@ static int rfc6979_gen_k_hacl(struct ecc_ctx *ctx, struct crypto_rng *rng,
 
 	return 0;
 }
+#endif
 
 /* scratch buffer should be at least ECC_MAX_BYTES */
 static int asn1_encode_signature_sg(struct akcipher_request *req,
@@ -425,7 +496,8 @@ static int asn1_encode_signature_sg(struct akcipher_request *req,
 	return 0;
 }
 
-static int ecdsa_sign(struct akcipher_request *req)
+#ifdef CONFIG_CRYPTO_ECDSA_HACL
+static int ecdsa_sign_hacl(struct akcipher_request *req)
 {
 	struct crypto_akcipher *tfm = crypto_akcipher_reqtfm(req);
 	struct ecc_ctx *ctx = akcipher_tfm_ctx(tfm);
@@ -457,9 +529,6 @@ static int ecdsa_sign(struct akcipher_request *req)
 	rng = rfc6979_alloc_rng(ctx, req->src_len, rawhash_k);
 	if (IS_ERR(rng))
 		return PTR_ERR(rng);
-
-	printk("in the signing function, before the branch. curve name: %s\n",
-	       ctx->curve->name);
 
 	if (strncmp(ctx->curve->name, "nist_256", 8) == 0) {
 		u8 private_key[32];
@@ -525,6 +594,57 @@ static int ecdsa_sign(struct akcipher_request *req)
 
 		ret = asn1_encode_signature_sg(req, &sig_ctx, rawhash_k);
 	}
+
+alloc_rng:
+	crypto_free_rng(rng);
+	return ret;
+}
+#endif /*ifdef CONFIG_CRYPTO_ECDSA_HACL*/
+
+static int ecdsa_sign(struct akcipher_request *req)
+{
+	struct crypto_akcipher *tfm = crypto_akcipher_reqtfm(req);
+	struct ecc_ctx *ctx = akcipher_tfm_ctx(tfm);
+	size_t keylen = ctx->curve->g.ndigits << ECC_DIGITS_TO_BYTES_SHIFT;
+	u8 rawhash_k[ECC_MAX_BYTES];
+	u64 hash[ECC_MAX_DIGITS];
+	struct ecdsa_signature_ctx sig_ctx = {
+		.curve = ctx->curve,
+	};
+	struct crypto_rng *rng;
+	ssize_t diff;
+	int ret;
+
+	/* if the hash is shorter then we will add leading zeros to fit to ndigits */
+	diff = keylen - req->src_len;
+	if (diff >= 0) {
+		if (diff)
+			memset(rawhash_k, 0, diff);
+		sg_copy_to_buffer(req->src,
+				  sg_nents_for_len(req->src, req->src_len),
+				  &rawhash_k[diff], req->src_len);
+	} else if (diff < 0) {
+		/* given hash is longer, we take the left-most bytes */
+		sg_copy_to_buffer(req->src,
+				  sg_nents_for_len(req->src, req->src_len),
+				  rawhash_k, req->src_len);
+	}
+
+	rng = rfc6979_alloc_rng(ctx, req->src_len, rawhash_k);
+	if (IS_ERR(rng))
+		return PTR_ERR(rng);
+
+	ecc_swap_digits((u64 *)rawhash_k, hash, ctx->curve->g.ndigits);
+	do {
+		ret = rfc6979_gen_k(ctx, rng, (u64 *)rawhash_k);
+		if (ret)
+			goto alloc_rng;
+
+		ret = _ecdsa_sign(ctx, hash, (u64 *)rawhash_k, &sig_ctx);
+	} while (ret == -EAGAIN);
+	memzero_explicit(rawhash_k, sizeof(rawhash_k));
+
+	ret = asn1_encode_signature_sg(req, &sig_ctx, rawhash_k);
 
 alloc_rng:
 	crypto_free_rng(rng);
@@ -733,6 +853,24 @@ static int ecdsa_nist_p384_init_tfm(struct crypto_akcipher *tfm)
 	return ecdsa_ecc_ctx_init(ctx, ECC_CURVE_NIST_P384);
 }
 
+#ifdef CONFIG_CRYPTO_ECDSA_HACL
+static struct akcipher_alg ecdsa_nist_p384 = {
+	.sign = ecdsa_sign_hacl,
+	.verify = ecdsa_verify_hacl,
+	.set_priv_key = ecdsa_set_priv_key,
+	.set_pub_key = ecdsa_set_pub_key,
+	.max_size = ecdsa_max_size,
+	.init = ecdsa_nist_p384_init_tfm,
+	.exit = ecdsa_exit_tfm,
+	.base = {
+		.cra_name = "ecdsa-nist-p384",
+		.cra_driver_name = "ecdsa-nist-p384-hacl",
+		.cra_priority = 100,
+		.cra_module = THIS_MODULE,
+		.cra_ctxsize = sizeof(struct ecc_ctx),
+	},
+};
+#else /*ifdef CONFIG_CRYPTO_ECDSA_HACL*/
 static struct akcipher_alg ecdsa_nist_p384 = {
 	.sign = ecdsa_sign,
 	.verify = ecdsa_verify,
@@ -749,6 +887,7 @@ static struct akcipher_alg ecdsa_nist_p384 = {
 		.cra_ctxsize = sizeof(struct ecc_ctx),
 	},
 };
+#endif /*ifdef CONFIG_CRYPTO_ECDSA_HACL*/
 
 static int ecdsa_nist_p256_init_tfm(struct crypto_akcipher *tfm)
 {
@@ -757,6 +896,24 @@ static int ecdsa_nist_p256_init_tfm(struct crypto_akcipher *tfm)
 	return ecdsa_ecc_ctx_init(ctx, ECC_CURVE_NIST_P256);
 }
 
+#ifdef CONFIG_CRYPTO_ECDSA_HACL
+static struct akcipher_alg ecdsa_nist_p256 = {
+	.sign = ecdsa_sign_hacl,
+	.verify = ecdsa_verify_hacl,
+	.set_priv_key = ecdsa_set_priv_key,
+	.set_pub_key = ecdsa_set_pub_key,
+	.max_size = ecdsa_max_size,
+	.init = ecdsa_nist_p256_init_tfm,
+	.exit = ecdsa_exit_tfm,
+	.base = {
+		.cra_name = "ecdsa-nist-p256",
+		.cra_driver_name = "ecdsa-nist-p256-hacl",
+		.cra_priority = 100,
+		.cra_module = THIS_MODULE,
+		.cra_ctxsize = sizeof(struct ecc_ctx),
+	},
+};
+#else /*ifdef CONFIG_CRYPTO_ECDSA_HACL*/
 static struct akcipher_alg ecdsa_nist_p256 = {
 	.sign = ecdsa_sign,
 	.verify = ecdsa_verify,
@@ -773,6 +930,7 @@ static struct akcipher_alg ecdsa_nist_p256 = {
 		.cra_ctxsize = sizeof(struct ecc_ctx),
 	},
 };
+#endif /*ifdef CONFIG_CRYPTO_ECDSA_HACL*/
 
 static int ecdsa_nist_p192_init_tfm(struct crypto_akcipher *tfm)
 {

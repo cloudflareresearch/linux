@@ -315,7 +315,16 @@ config CRYPTO_ECDSA
 	  ECDSA (Elliptic Curve Digital Signature Algorithm) (FIPS 186,
 	  ISO/IEC 14888-3)
 	  using curves P-192, P-256, and P-384
-	  P-256 uses formally a verified implementation from HACL* 
+
+config CRYPTO_ECDSA_HACL
+	tristate "Use HACL* for ECDSA"
+  depends on CRYPTO_ECDSA
+	select CRYPTO_ECC
+	select CRYPTO_AKCIPHER
+	select CRYPTO_DRBG_HMAC
+	select ASN1
+	help
+	  Use verified implementations from HACL* for ECDSA with P-256 and P-384
 
 config CRYPTO_ECRDSA
 	tristate "EC-RDSA (Elliptic Curve Russian Digital Signature Algorithm)"

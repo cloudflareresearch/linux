@@ -63,12 +63,14 @@ obj-$(CONFIG_CRYPTO_SM2) += sm2_generic.o
 $(obj)/ecprivkey.asn1.o: $(obj)/ecprivkey.asn1.c $(obj)/ecprivkey.asn1.h
 $(obj)/ecdsasignature.asn1.o: $(obj)/ecdsasignature.asn1.c $(obj)/ecdsasignature.asn1.h
 $(obj)/ecdsa.o: $(obj)/ecdsasignature.asn1.h $(obj)/ecprivkey.asn1.h
-ecdsa_generic-y += p256-hacl-generated.o
-ecdsa_generic-y += p384-hacl-generated.o
 ecdsa_generic-y += ecdsa.o
 ecdsa_generic-y += ecprivkey.asn1.o
 ecdsa_generic-y += ecdsasignature.asn1.o
 obj-$(CONFIG_CRYPTO_ECDSA) += ecdsa_generic.o
+
+ecdsa_hacl-y += p256-hacl-generated.o
+ecdsa_hacl-y += p384-hacl-generated.o
+obj-$(CONFIG_CRYPTO_ECDSA_HACL) += ecdsa_hacl.o
 
 crypto_acompress-y := acompress.o
 crypto_acompress-y += scompress.o
