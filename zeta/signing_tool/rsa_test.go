@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -52,6 +53,7 @@ func TestRsa(t *testing.T) {
 }
 
 func BenchmarkRSAKernelSign(b *testing.B) {
+	runtime.LockOSThread()
 	keyInKernel, _, digest, signature := kernelSetupRsa2048(b, "benchkey")
 
 	b.ResetTimer()
@@ -64,6 +66,7 @@ func BenchmarkRSAKernelSign(b *testing.B) {
 }
 
 func BenchmarkRSAKernelVerify(b *testing.B) {
+	runtime.LockOSThread()
 	keyInKernel, _, digest, signature := kernelSetupRsa2048(b, "benchkey")
 
 	signature, err := keyInKernel.SignRsaPrehashed(digest[:], signature[:])
@@ -81,6 +84,7 @@ func BenchmarkRSAKernelVerify(b *testing.B) {
 }
 
 func BenchmarkRSAGo(b *testing.B) {
+	runtime.LockOSThread()
 	const N = 2048
 
 	var (
