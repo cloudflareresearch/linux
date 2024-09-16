@@ -174,7 +174,7 @@ func BenchmarkECDSAP256KernelVerify(b *testing.B) {
 	}
 }
 
-func BenchmarkECDSAGo(b *testing.B) {
+func BenchmarkECDSAP256Go(b *testing.B) {
 	var (
 		msg    = []byte("hello world")
 		digest = sha256.Sum256(msg)
@@ -193,6 +193,41 @@ func BenchmarkECDSAGo(b *testing.B) {
 	b.Run("Sign", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			_, err := priv.Sign(rand.Reader, digest[:], crypto.SHA256)
+			if err != nil {
+				b.Fatalf("failed to sign the digest: %v", err)
+			}
+		}
+	})
+
+	b.Run("Verify", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			ok := ecdsa.VerifyASN1(&priv.PublicKey, digest[:], signature[:])
+			if !ok {
+				b.Fatalf("failed to verify the signature: %v", err)
+			}
+		}
+	})
+}
+
+func BenchmarkECDSAP384Go(b *testing.B) {
+	var (
+		msg    = []byte("hello world")
+		digest = sha512.Sum384(msg)
+	)
+
+	priv, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
+	if err != nil {
+		b.Fatalf("failed to generate private key: %v", err)
+	}
+
+	signature, err := ecdsa.SignASN1(rand.Reader, priv, digest[:])
+	if err != nil {
+		b.Fatalf("failed to sign the digest: %v", err)
+	}
+
+	b.Run("Sign", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_, err := priv.Sign(rand.Reader, digest[:], crypto.SHA384)
 			if err != nil {
 				b.Fatalf("failed to sign the digest: %v", err)
 			}
