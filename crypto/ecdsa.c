@@ -45,8 +45,7 @@ struct ecdsa_signature_ctx {
  * Get the r and s components of a signature from the X509 certificate.
  */
 static int ecdsa_get_signature_rs(u64 *dest, size_t hdrlen, unsigned char tag,
-				  const void *value, size_t vlen,
-				  unsigned int ndigits)
+				  const void *value, size_t vlen, unsigned int ndigits)
 {
 	size_t keylen = ndigits * sizeof(u64);
 	ssize_t diff = vlen - keylen;
@@ -104,8 +103,7 @@ int ecdsa_get_signature_s(void *context, size_t hdrlen, unsigned char tag,
 				      sig->curve->g.ndigits);
 }
 
-static int _ecdsa_verify(struct ecc_ctx *ctx, const u64 *hash, const u64 *r,
-			 const u64 *s)
+static int _ecdsa_verify(struct ecc_ctx *ctx, const u64 *hash, const u64 *r, const u64 *s)
 {
 	const struct ecc_curve *curve = ctx->curve;
 	unsigned int ndigits = curve->g.ndigits;
@@ -122,8 +120,8 @@ static int _ecdsa_verify(struct ecc_ctx *ctx, const u64 *hash, const u64 *r,
 		return -EBADMSG;
 
 	/* hash is given */
-	pr_devel("hash : %016llx %016llx ... %016llx\n", hash[ndigits - 1],
-		 hash[ndigits - 2], hash[0]);
+	pr_devel("hash : %016llx %016llx ... %016llx\n",
+		 hash[ndigits - 1], hash[ndigits - 2], hash[0]);
 
 	/* s1 = (s^-1) mod n */
 	vli_mod_inv(s1, s, curve->n, ndigits);
