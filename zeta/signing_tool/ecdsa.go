@@ -18,6 +18,17 @@ type EcdsaKey struct {
 	keySize int
 }
 
+func EcdsaKeyFromSerialAndSize(serial KeySerial, keySize int) EcdsaKey {
+	return EcdsaKey{
+		serial,
+		keySize,
+	}
+}
+
+func (key EcdsaKey) Serial() int32 {
+	return int32(key.serial)
+}
+
 func (key EcdsaKey) MakeSignatureBuffer() []byte {
 	if key.keySize == 256 {
 		return make([]byte, ecdsaP256SigLen)

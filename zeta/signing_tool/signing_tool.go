@@ -25,6 +25,21 @@ func ProcessKeyring() Keyring {
 	return -2
 }
 
+// Return the key ring of the current session.
+func SessionKeyring() Keyring {
+	return -3
+}
+
+// Return the key ring of the current user.
+func UserKeyring() Keyring {
+	return -4
+}
+
+// Return the key ring of the current user-session.
+func UserSessionKeyring() Keyring {
+	return -5
+}
+
 func (keyring Keyring) LoadRsaPrivateKey(name string, key *rsa.PrivateKey) (RsaKey, error) {
 	serial, err := keyring.LoadPrivateKey(name, key)
 	if err != nil {

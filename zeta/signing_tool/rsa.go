@@ -12,6 +12,14 @@ type RsaKey struct {
 	serial KeySerial
 }
 
+func RsaKeyFromSerial(serial KeySerial) RsaKey {
+	return RsaKey{serial}
+}
+
+func (key RsaKey) Serial() int32 {
+	return int32(key.serial)
+}
+
 func (key RsaKey) MakeSignatureBuffer() []byte {
 	return make([]byte, rsaSigLen)
 }
