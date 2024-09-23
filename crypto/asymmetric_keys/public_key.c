@@ -309,10 +309,11 @@ static int software_key_eds_op(struct kernel_pkey_params *params,
 			goto error_free_key;
 		}
 
-		if (pkey->key_is_private)
+		if (pkey->key_is_private) {
 			ret = crypto_sig_set_privkey(sig, key, pkey->keylen);
-		else
+		} else {
 			ret = crypto_sig_set_pubkey(sig, key, pkey->keylen);
+		}
 		if (ret)
 			goto error_free_tfm;
 
@@ -324,10 +325,13 @@ static int software_key_eds_op(struct kernel_pkey_params *params,
 			goto error_free_key;
 		}
 
-		if (pkey->key_is_private)
-			ret = crypto_akcipher_set_priv_key(tfm, key, pkey->keylen);
-		else
-			ret = crypto_akcipher_set_pub_key(tfm, key, pkey->keylen);
+		if (pkey->key_is_private) {
+			ret = crypto_akcipher_set_priv_key(tfm, key,
+							   pkey->keylen);
+		} else {
+			ret = crypto_akcipher_set_pub_key(tfm, key,
+							  pkey->keylen);
+		}
 		if (ret)
 			goto error_free_tfm;
 
