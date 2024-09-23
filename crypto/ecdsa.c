@@ -253,12 +253,11 @@ static int ecdsa_verify(struct akcipher_request *req)
 		return -ENOMEM;
 
 	sg_pcopy_to_buffer(req->src,
-			   sg_nents_for_len(req->src,
-					    req->src_len + req->dst_len),
-			   buffer, req->src_len + req->dst_len, 0);
+		sg_nents_for_len(req->src, req->src_len + req->dst_len),
+		buffer, req->src_len + req->dst_len, 0);
 
-	ret = asn1_ber_decoder(&ecdsasignature_decoder, &sig_ctx, buffer,
-			       req->src_len);
+	ret = asn1_ber_decoder(&ecdsasignature_decoder, &sig_ctx,
+			       buffer, req->src_len);
 	if (ret < 0)
 		goto error;
 
@@ -684,8 +683,7 @@ static int ecdsa_ecc_ctx_reset(struct ecc_ctx *ctx)
  * certificate. The key data contain the concatenated X and Y coordinates of
  * the public key.
  */
-static int ecdsa_set_pub_key(struct crypto_akcipher *tfm, const void *key,
-			     unsigned int keylen)
+static int ecdsa_set_pub_key(struct crypto_akcipher *tfm, const void *key, unsigned int keylen)
 {
 	struct ecc_ctx *ctx = akcipher_tfm_ctx(tfm);
 	const unsigned char *d = key;
