@@ -38,8 +38,6 @@ static int rsa_enc(struct akcipher_request *req)
 	struct crypto_akcipher *tfm = crypto_akcipher_reqtfm(req);
 	const struct hacl_rsa_key *pkey = rsa_get_key(tfm);
 	int ret = 0;
-	//printk("<<< in hacl rsa_enc");
-	//printk("<<< pkey->modbits:%d, pkey->ebits:%d, pkey->dbits:%d", pkey->modBits,pkey->eBits,pkey->dBits);
 
 	if (unlikely(!pkey->nbytes || !pkey->ebytes)) {
 		ret = -EINVAL;
@@ -49,7 +47,6 @@ static int rsa_enc(struct akcipher_request *req)
 	uint64_t* pk = Hacl_RSA_new_rsa_load_pkey(pkey->modBits,pkey->eBits,pkey->nbytes,pkey->ebytes);
 
 	if (!pk) {
-	        printk("<<< load pkey failed");
 		ret = -EINVAL;
 		goto done;
 	}
@@ -58,7 +55,6 @@ static int rsa_enc(struct akcipher_request *req)
 	unsigned int plain_len = (pkey->modBits - 1)/8 + 1;
 	unsigned int cipher_len = (pkey->modBits - 2)/8 + 1;
 
-	//  printk("req->src_len:%d, plain_len:%d, req->dst_len:%d, cipher_len:%d", req->src_len,plain_len,req->dst_len,cipher_len);
 	if (req->src_len > plain_len || req->dst_len != cipher_len) {
 		ret = -EINVAL;
 		goto pkdone;
@@ -79,13 +75,9 @@ static int rsa_enc(struct akcipher_request *req)
    	        goto bufdone;
 	}
 
-	//	printk("<<< exiting hacl rsa_enc 5 with cipher_len=%d, dst_len=%d, nents=%d, cipher[0]=%x, cipher[15]=%x",
-	//	       cipher_len,req->dst_len,sg_nents_for_len(req->dst, req->dst_len),cbuffer[0],cbuffer[15]);
 	sg_copy_from_buffer(req->dst,
 		          sg_nents_for_len(req->dst, req->dst_len),
 			  buffer+plain_len, cipher_len);
-	//printk("<<< exiting hacl rsa_enc 6 with copied = %d, cipher_len=%d, cipher[0]=%x, cipher[15]=%x",
-	//       copied, cipher_len,cbuffer[0],cbuffer[15]);
 
 	
  bufdone: kfree(buffer);
@@ -95,7 +87,6 @@ static int rsa_enc(struct akcipher_request *req)
 
 static int rsa_dec(struct akcipher_request *req)
 {
-  //  printk("<<< in rsa dec");
 	struct crypto_akcipher *tfm = crypto_akcipher_reqtfm(req);
 	const struct hacl_rsa_key *skey = rsa_get_key(tfm);
 	int ret = 0;
@@ -108,7 +99,6 @@ static int rsa_dec(struct akcipher_request *req)
 	uint64_t *sk = Hacl_RSA_new_rsa_load_skey(skey->modBits,skey->eBits,skey->dBits,skey->nbytes,skey->ebytes,skey->dbytes);
 
 	if (!sk) {
-	        printk("<<< load skey failed");
 		ret = -EINVAL;
 		goto done;
 	}
@@ -116,11 +106,8 @@ static int rsa_dec(struct akcipher_request *req)
 	
 	unsigned int plain_len = (skey->modBits - 1)/8 + 1;
 	unsigned int cipher_len = (skey->modBits - 2)/8 + 1;
-	//  printk("<<< pkey->modbits:%d, pkey->ebits:%d, pkey->dbits:%d", skey->modBits,skey->eBits,skey->dBits);
-	//  printk("<<< req->src_len:%d, plain_len:%d, req->dst_len:%d, cipher_len:%d", req->src_len,plain_len,req->dst_len,cipher_len);
 
 	if (req->src_len > cipher_len || req->dst_len != plain_len) {
-	  printk("not the right lengths");
 		ret = -EINVAL;
 		goto skdone;
 	}
@@ -138,13 +125,10 @@ static int rsa_dec(struct akcipher_request *req)
 	ret = Hacl_RSA_rsa_dec(skey->modBits,skey->eBits,skey->dBits,sk,buffer,buffer+cipher_len);
 
 	if (!ret) {
-	        printk("<<< rsa_dec failed");
 		ret = -EBADMSG;
 		goto bufdone;
 	}
 	
-	//	printk("<<< exiting hacl rsa_dec 5 with plain_len=%d, dst_len=%d, nents=%d, plain[0]=%x, plain[15]=%x",
-	//	       plain_len,req->dst_len,sg_nents_for_len(req->dst, req->dst_len),buffer[cipher_len],buffer[cipher_len+15]);
 	sg_copy_from_buffer(req->dst,
 		          sg_nents_for_len(req->dst, req->dst_len),
 			  buffer+cipher_len, req->dst_len);
@@ -170,8 +154,6 @@ static void rsa_free_key(struct hacl_rsa_key *key)
 static int rsa_set_pub_key(struct crypto_akcipher *tfm, const void *key,
 			   unsigned int keylen)
 {
-  // printk("<<< calling hacl rsa_set_pub_key");
-
 	struct hacl_rsa_key *pkey = rsa_get_key(tfm);
 	struct rsa_key raw_key = {0};
 	
@@ -214,8 +196,6 @@ err:
 static int rsa_set_priv_key(struct crypto_akcipher *tfm, const void *key,
 			   unsigned int keylen)
 {
-  //     printk("<<< calling hacl rsa_set_priv_key");
-  
 	struct hacl_rsa_key *skey = rsa_get_key(tfm);
 	struct rsa_key raw_key = {0};
 	
